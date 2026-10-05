@@ -1,0 +1,322 @@
+{
+  "_meta": {
+    "version": "1.0.0",
+    "description": "Behavioural detection rules for PowerShell macro, WMI lateral movement, and certutil abuse.",
+    "score_threshold": 60,
+    "window_seconds": 300
+  },
+  "rules": [
+    {
+      "id": "PS-001",
+      "name": "PowerShell launched from Office application",
+      "family": "powershell",
+      "description": "powershell.exe spawned directly by an Office process — classic macro delivery.",
+      "conditions": {
+        "process": "(?i)powershell\\.exe",
+        "parent_process": "(?i)(WINWORD|EXCEL|POWERPNT|MSACCESS|MSPUB)\\.EXE"
+      },
+      "score": 35,
+      "severity": "high",
+      "mitre": ["T1059.001", "T1566.001"],
+      "tags": ["macro", "office", "powershell"]
+    },
+    {
+      "id": "PS-002",
+      "name": "PowerShell encoded command (-enc / -EncodedCommand)",
+      "family": "powershell",
+      "description": "Base64-encoded payload passed via -enc or -EncodedCommand — primary obfuscation method.",
+      "conditions": {
+        "command": "(?i)powershell.*(-enc\\b|-EncodedCommand\\b)"
+      },
+      "score": 30,
+      "severity": "high",
+      "mitre": ["T1059.001", "T1027"],
+      "tags": ["encoded-command", "obfuscation"]
+    },
+    {
+      "id": "PS-003",
+      "name": "PowerShell hidden window + no-profile flags",
+      "family": "powershell",
+      "description": "Combination of -NoProfile/-nop and -WindowStyle Hidden strongly suggests non-interactive malicious execution.",
+      "conditions": {
+        "command": "(?i)powershell.*(-nop|-NonInteractive|-NoProfile).*(-w\\s+hidden|-WindowStyle\\s+Hidden)"
+      },
+      "score": 25,
+      "severity": "high",
+      "mitre": ["T1059.001"],
+      "tags": ["hidden", "nointeract"]
+    },
+    {
+      "id": "PS-004",
+      "name": "PowerShell execution-policy bypass",
+      "family": "powershell",
+      "description": "Explicit execution-policy bypass used to circumvent PowerShell script restrictions.",
+      "conditions": {
+        "command": "(?i)powershell.*(-ep\\s+bypass|-ExecutionPolicy\\s+Bypass)"
+      },
+      "score": 20,
+      "severity": "medium",
+      "mitre": ["T1059.001"],
+      "tags": ["policy-bypass"]
+    },
+    {
+      "id": "PS-005",
+      "name": "PowerShell download cradle (IEX + DownloadString)",
+      "family": "powershell",
+      "description": "In-memory download-and-execute cradle — payload never touches disk.",
+      "conditions": {
+        "command": "(?i)(IEX|Invoke-Expression).*DownloadString|DownloadString.*(IEX|Invoke-Expression)"
+      },
+      "score": 40,
+      "severity": "critical",
+      "mitre": ["T1059.001", "T1105"],
+      "tags": ["download-cradle", "fileless"]
+    },
+    {
+      "id": "PS-006",
+      "name": "PowerShell AMSI bypass attempt",
+      "family": "powershell",
+      "description": "Reflection-based AMSI initialisation bypass — indicates awareness of AV evasion.",
+      "conditions": {
+        "command": "(?i)(AmsiUtils|amsiInitFailed|amsi\\.dll)"
+      },
+      "score": 45,
+      "severity": "critical",
+      "mitre": ["T1562.001"],
+      "tags": ["amsi-bypass", "evasion"]
+    },
+    {
+      "id": "PS-007",
+      "name": "PowerShell registry Run-key persistence",
+      "family": "powershell",
+      "description": "Set-ItemProperty targeting CurrentVersion\\Run establishes user-level persistence.",
+      "conditions": {
+        "command": "(?i)Set-ItemProperty.*CurrentVersion\\\\Run"
+      },
+      "score": 30,
+      "severity": "high",
+      "mitre": ["T1547.001"],
+      "tags": ["persistence", "registry"]
+    },
+    {
+      "id": "WMI-001",
+      "name": "WmiPrvSE.exe spawning command-line process",
+      "family": "wmi",
+      "description": "WmiPrvSE.exe spawning cmd/powershell/net/reg is the hallmark of WMI lateral movement.",
+      "conditions": {
+        "parent_process": "(?i)WmiPrvSE\\.exe",
+        "process": "(?i)(cmd|powershell|net|reg|schtasks|wscript|cscript)\\.exe"
+      },
+      "score": 40,
+      "severity": "high",
+      "mitre": ["T1047", "T1021"],
+      "tags": ["lateral-movement", "wmiprvse-parent"]
+    },
+    {
+      "id": "WMI-002",
+      "name": "wmic.exe remote node execution (/node: flag)",
+      "family": "wmi",
+      "description": "wmic.exe used with /node: to remotely create a process — core WMI lateral-movement technique.",
+      "conditions": {
+        "process": "(?i)wmic\\.exe",
+        "command": "(?i)/node:"
+      },
+      "score": 35,
+      "severity": "high",
+      "mitre": ["T1047"],
+      "tags": ["remote-exec", "wmic"]
+    },
+    {
+      "id": "WMI-003",
+      "name": "wmic.exe credentials in command line",
+      "family": "wmi",
+      "description": "Clear-text credentials (/user: /password:) in wmic command line — credential theft/reuse indicator.",
+      "conditions": {
+        "command": "(?i)wmic.*/user:.*(/password:|/p:)"
+      },
+      "score": 30,
+      "severity": "high",
+      "mitre": ["T1047", "T1078"],
+      "tags": ["credential-in-cmdline", "wmic"]
+    },
+    {
+      "id": "WMI-004",
+      "name": "WMI process call create",
+      "family": "wmi",
+      "description": "Win32_Process.Create called via wmic — standard WMI remote-process-creation method.",
+      "conditions": {
+        "command": "(?i)process\\s+call\\s+create"
+      },
+      "score": 25,
+      "severity": "medium",
+      "mitre": ["T1047"],
+      "tags": ["process-create", "wmic"]
+    },
+    {
+      "id": "WMI-005",
+      "name": "WMI service creation via wmic",
+      "family": "wmi",
+      "description": "wmic.exe used to create a new service — persistent implant technique.",
+      "conditions": {
+        "command": "(?i)wmic.*service\\s+call\\s+create"
+      },
+      "score": 45,
+      "severity": "critical",
+      "mitre": ["T1543.003", "T1047"],
+      "tags": ["service-creation", "persistence"]
+    },
+    {
+      "id": "WMI-006",
+      "name": "WmiPrvSE.exe spawning scheduled task creation",
+      "family": "wmi",
+      "description": "WMI-initiated schtasks.exe execution — lateral movement combined with persistence.",
+      "conditions": {
+        "parent_process": "(?i)WmiPrvSE\\.exe",
+        "command": "(?i)schtasks.*/create"
+      },
+      "score": 40,
+      "severity": "critical",
+      "mitre": ["T1047", "T1053.005"],
+      "tags": ["scheduled-task", "persistence", "lateral-movement"]
+    },
+    {
+      "id": "CERT-001",
+      "name": "certutil -urlcache download",
+      "family": "certutil",
+      "description": "certutil.exe abused to download a remote file via -urlcache — quintessential LOLBAS technique.",
+      "conditions": {
+        "process": "(?i)certutil\\.exe",
+        "command": "(?i)certutil.*-urlcache"
+      },
+      "score": 40,
+      "severity": "high",
+      "mitre": ["T1105", "T1218"],
+      "tags": ["download", "urlcache", "lolbas"]
+    },
+    {
+      "id": "CERT-002",
+      "name": "certutil Base64 decode",
+      "family": "certutil",
+      "description": "certutil -decode transforms a Base64 blob into a binary — second stage of download-decode-execute.",
+      "conditions": {
+        "process": "(?i)certutil\\.exe",
+        "command": "(?i)certutil.*-decode(?!hex)"
+      },
+      "score": 30,
+      "severity": "medium",
+      "mitre": ["T1140", "T1218"],
+      "tags": ["decode", "base64", "lolbas"]
+    },
+    {
+      "id": "CERT-003",
+      "name": "certutil hex decode (-decodehex)",
+      "family": "certutil",
+      "description": "certutil -decodehex variant of payload decoding.",
+      "conditions": {
+        "process": "(?i)certutil\\.exe",
+        "command": "(?i)certutil.*-decodehex"
+      },
+      "score": 30,
+      "severity": "medium",
+      "mitre": ["T1140", "T1218"],
+      "tags": ["decodehex", "lolbas"]
+    },
+    {
+      "id": "CERT-004",
+      "name": "certutil download-decode-execute chain",
+      "family": "certutil",
+      "description": "Single command containing both -urlcache and -decode confirms full download-then-execute chain.",
+      "conditions": {
+        "command": "(?i)certutil.*-urlcache.*certutil.*-decode|certutil.*-decode.*certutil.*-urlcache"
+      },
+      "score": 50,
+      "severity": "critical",
+      "mitre": ["T1105", "T1140", "T1218"],
+      "tags": ["chain", "download-and-execute", "lolbas"]
+    },
+    {
+      "id": "CERT-005",
+      "name": "certutil writing to suspicious output path",
+      "family": "certutil",
+      "description": "certutil output targeting writable system paths (temp, programdata, system32) — payload staging location.",
+      "conditions": {
+        "process": "(?i)certutil\\.exe",
+        "command": "(?i)(C:\\\\windows\\\\temp|C:\\\\programdata|C:\\\\users\\\\public|C:\\\\windows\\\\system32)"
+      },
+      "score": 20,
+      "severity": "medium",
+      "mitre": ["T1105", "T1218"],
+      "tags": ["staging-path", "lolbas"]
+    },
+    {
+      "id": "CERT-006",
+      "name": "certutil launched from scripting host",
+      "family": "certutil",
+      "description": "certutil.exe spawned by a scripting host (wscript, cscript, mshta, powershell) — script-based delivery.",
+      "conditions": {
+        "process": "(?i)certutil\\.exe",
+        "parent_process": "(?i)(wscript|cscript|mshta|powershell)\\.exe"
+      },
+      "score": 25,
+      "severity": "high",
+      "mitre": ["T1218", "T1059"],
+      "tags": ["script-host-parent", "lolbas"]
+    },
+    {
+      "id": "GEN-001",
+      "name": "Executable dropped to Windows Temp",
+      "family": "generic",
+      "description": "Executable dropped to the Windows temp directory — common staging location for second-stage payloads.",
+      "conditions": {
+        "command": "(?i)C:\\\\windows\\\\temp\\\\[^\\s]+\\.(exe|dll|bat|ps1|vbs|js)"
+      },
+      "score": 15,
+      "severity": "medium",
+      "mitre": ["T1074.001"],
+      "tags": ["staging", "temp-path"]
+    },
+    {
+      "id": "GEN-002",
+      "name": "Local admin account creation via net.exe",
+      "family": "generic",
+      "description": "net.exe used to add a user to the local administrators group.",
+      "conditions": {
+        "command": "(?i)net\\s+(localgroup|user).*(/add|administrators)"
+      },
+      "score": 35,
+      "severity": "high",
+      "mitre": ["T1136.001"],
+      "tags": ["account-creation", "privilege-escalation"]
+    },
+    {
+      "id": "GEN-003",
+      "name": "Scheduled task creation from script context",
+      "family": "generic",
+      "description": "schtasks.exe /create launched from a scripting context — often used for persistence.",
+      "conditions": {
+        "process": "(?i)schtasks\\.exe",
+        "command": "(?i)schtasks.*/create",
+        "parent_process": "(?i)(cmd|powershell|wscript|cscript)\\.exe"
+      },
+      "score": 25,
+      "severity": "high",
+      "mitre": ["T1053.005"],
+      "tags": ["scheduled-task", "persistence"]
+    },
+    {
+      "id": "GEN-004",
+      "name": "Registry Run-key modification via reg.exe",
+      "family": "generic",
+      "description": "reg.exe adding/modifying a Run/RunOnce key — persistent auto-start mechanism.",
+      "conditions": {
+        "process": "(?i)reg\\.exe",
+        "command": "(?i)reg\\s+add.*CurrentVersion\\\\(Run|RunOnce)"
+      },
+      "score": 30,
+      "severity": "high",
+      "mitre": ["T1547.001"],
+      "tags": ["persistence", "registry", "run-key"]
+    }
+  ]
+}
+
