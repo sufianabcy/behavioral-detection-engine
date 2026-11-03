@@ -1,0 +1,41 @@
+title: Windows Script Host starts a LOLBin
+name: proc_script_host_spawns_lolbin
+id: ef3f665f-38e1-4bf7-bd6d-68a4db2233d1
+status: experimental
+description: |
+  A .js or .vbs script starting certutil, bitsadmin, rundll32, regsvr32,
+  mshta or a shell. Droppers chain built-in tools like this to download and
+  run their payload. Domain logon scripts (on the NETLOGON share) are filtered
+  out because they legitimately run commands.
+references:
+  - https://attack.mitre.org/techniques/T1059/
+author: bde course project
+date: 2026-11-03
+tags:
+  - attack.execution
+  - attack.t1059
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_parent:
+    ParentImage|endswith:
+      - '\wscript.exe'
+      - '\cscript.exe'
+  selection_child:
+    Image|endswith:
+      - '\certutil.exe'
+      - '\bitsadmin.exe'
+      - '\rundll32.exe'
+      - '\regsvr32.exe'
+      - '\mshta.exe'
+      - '\powershell.exe'
+      - '\pwsh.exe'
+      - '\cmd.exe'
+      - '\msiexec.exe'
+  filter_logon_script:
+    ParentCommandLine|contains: '\NETLOGON\'
+  condition: all of selection_* and not filter_logon_script
+falsepositives:
+  - Software installers written as scripts
+level: high

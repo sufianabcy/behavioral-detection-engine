@@ -1,0 +1,30 @@
+title: whoami lists the user's privileges or groups
+name: proc_whoami_privileges
+id: 5b86c486-72e9-44f5-bd42-443f49512573
+status: experimental
+description: |
+  "Who am I, and what can I do here?" is one of the first questions an
+  attacker asks on a new machine. Admins ask it too, so this is low on its own.
+references:
+  - https://attack.mitre.org/techniques/T1033/
+author: bde course project
+date: 2026-11-03
+tags:
+  - attack.discovery
+  - attack.t1033
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_img:
+    - Image|endswith: '\whoami.exe'
+    - OriginalFileName: 'whoami.exe'
+  selection_flags:
+    CommandLine|windash|contains:
+      - ' -all'
+      - ' -priv'
+      - ' -groups'
+  condition: all of selection_*
+falsepositives:
+  - Admins and support staff checking their own rights
+level: low

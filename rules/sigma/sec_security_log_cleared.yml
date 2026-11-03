@@ -1,0 +1,25 @@
+title: The Security log was cleared
+name: sec_security_log_cleared
+id: aedc7a41-79d3-4e0f-8fd6-94e504f2f45a
+status: experimental
+description: |
+  Windows itself writes event 1102 into the fresh Security log right after it
+  is cleared, naming who did it. This catches log clearing however it was
+  done, not only with wevtutil.
+references:
+  - https://attack.mitre.org/techniques/T1685/005/
+author: bde course project
+date: 2026-11-03
+tags:
+  - attack.defense-impairment
+  - attack.t1685.005
+logsource:
+  product: windows
+  service: security
+detection:
+  selection:
+    EventID: 1102
+  condition: selection
+falsepositives:
+  - Planned log resets (should be rare and announced)
+level: high

@@ -1,0 +1,30 @@
+title: Remote WMI starts a shell that hides itself or explores the domain
+name: chain_wmi_remote_shell_discovery
+id: 1dc437c3-cab2-4975-b212-82103272261d
+description: |
+  WmiPrvSE.exe starts a shell (the receiving end of remote WMI execution),
+  and that shell either hides what it runs, calls an outside server, or runs
+  at least two different discovery commands. Admins use WMI too, but to run
+  plain, visible commands such as gpupdate.
+level: critical
+timespan: 15m
+ordered: false   # attackers run discovery commands in any order
+min_steps: 2
+crosshost: true  # look for the logon and the computer it came from
+tags:
+  - attack.lateral-movement
+  - attack.t1078.002
+steps:
+  - name: wmi-starts-shell
+    description: WmiPrvSE.exe starts a shell or script engine
+    signals: [proc_wmiprvse_spawns_shell]
+  - name: hides-itself
+    description: The shell runs an encoded command or a hidden window
+    signals: [proc_powershell_encoded_command, proc_powershell_hidden_window]
+  - name: calls-out
+    description: The shell connects to a public address
+    signals: [net_script_engine_public_destination]
+  - name: discovery
+    description: At least two different discovery commands (whoami, net group, nltest)
+    signals: [proc_whoami_privileges, proc_domain_group_discovery, proc_nltest_domain_discovery]
+    min_distinct: 2

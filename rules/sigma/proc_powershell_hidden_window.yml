@@ -1,0 +1,32 @@
+title: PowerShell starts with a hidden window
+name: proc_powershell_hidden_window
+id: d2fb2ad6-747b-431c-a915-5fabd5abb002
+status: experimental
+description: |
+  -WindowStyle Hidden (or -w hidden, or -w 1) keeps PowerShell's window from
+  ever appearing, so the user doesn't notice it running.
+references:
+  - https://attack.mitre.org/techniques/T1564/003/
+author: bde course project
+date: 2026-11-03
+tags:
+  - attack.stealth
+  - attack.t1564.003
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_img:
+    - Image|endswith:
+        - '\powershell.exe'
+        - '\pwsh.exe'
+    - OriginalFileName:
+        - 'PowerShell.EXE'
+        - 'pwsh.dll'
+  selection_flag:
+    # -w, -wi, -win, ... -windowstyle, followed by hidden or its number, 1
+    CommandLine|re|i: '\s[-/]w(i(n(d(o(w(s(t(y(l(e)?)?)?)?)?)?)?)?)?)?\s+(hidden|1)(\s|$)'
+  condition: all of selection_*
+falsepositives:
+  - Scheduled maintenance scripts that hide their window
+level: medium

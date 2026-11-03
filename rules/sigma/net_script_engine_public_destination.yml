@@ -1,0 +1,40 @@
+title: Script engine connects to a public IP address
+name: net_script_engine_public_destination
+id: 6575c5b5-fba8-4c1c-a3fe-3551ca66efb2
+status: experimental
+description: |
+  PowerShell or Windows Script Host opening a connection to an address outside
+  the company network. Stagers do this to fetch their next stage or reach
+  their command-and-control server.
+references:
+  - https://attack.mitre.org/techniques/T1071/001/
+author: bde course project
+date: 2026-11-03
+tags:
+  - attack.command-and-control
+  - attack.t1071.001
+logsource:
+  category: network_connection
+  product: windows
+detection:
+  selection:
+    Initiated: 'true'
+    Image|endswith:
+      - '\powershell.exe'
+      - '\pwsh.exe'
+      - '\wscript.exe'
+      - '\cscript.exe'
+  filter_private:
+    DestinationIp|cidr:
+      - '10.0.0.0/8'
+      - '172.16.0.0/12'
+      - '192.168.0.0/16'
+      - '127.0.0.0/8'
+      - '169.254.0.0/16'
+      - '::1/128'
+      - 'fe80::/10'
+      - 'fc00::/7'
+  condition: selection and not filter_private
+falsepositives:
+  - Update-Help, Install-Module and other admin scripts that reach the internet
+level: medium

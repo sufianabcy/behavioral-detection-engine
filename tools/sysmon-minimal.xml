@@ -1,0 +1,87 @@
+<!--
+  A small Sysmon configuration for testing bde on a real Windows computer.
+
+  It logs only what bde's rules read, so the log stays small and holds as
+  little personal information as possible:
+    event 1   every process start (with command line and parent)
+    event 3   outgoing connections, but only from script engines and other
+              programs attackers misuse, plus remote-admin ports
+    event 11  new script and program files
+    event 13  changes to Run and RunOnce keys (programs that start at logon)
+  No DNS queries, no browser connections, no file names of documents.
+
+  Install (as administrator, from the folder with Sysmon64.exe):
+    .\Sysmon64.exe -accepteula -i <path>\tools\sysmon-minimal.xml
+  Update an existing install:   .\Sysmon64.exe -c <path>\tools\sysmon-minimal.xml
+  Remove Sysmon completely:     .\Sysmon64.exe -u
+
+  If Sysmon rejects the schemaversion, run .\Sysmon64.exe -s and put the
+  version it prints in the line below.
+-->
+<Sysmon schemaversion="4.82">
+  <HashAlgorithms>SHA256</HashAlgorithms>
+  <CheckRevocation>False</CheckRevocation>
+  <EventFiltering>
+
+    <!-- Event 1: log every process start. An empty exclude list excludes nothing. -->
+    <RuleGroup name="process-create" groupRelation="or">
+      <ProcessCreate onmatch="exclude" />
+    </RuleGroup>
+
+    <!-- Event 3: off unless included. Only the programs bde's rules look at. -->
+    <RuleGroup name="network" groupRelation="or">
+      <NetworkConnect onmatch="include">
+        <Image condition="end with">\powershell.exe</Image>
+        <Image condition="end with">\pwsh.exe</Image>
+        <Image condition="end with">\wscript.exe</Image>
+        <Image condition="end with">\cscript.exe</Image>
+        <Image condition="end with">\mshta.exe</Image>
+        <Image condition="end with">\rundll32.exe</Image>
+        <Image condition="end with">\regsvr32.exe</Image>
+        <Image condition="end with">\certutil.exe</Image>
+        <Image condition="end with">\bitsadmin.exe</Image>
+        <Image condition="end with">\mstsc.exe</Image>
+        <DestinationPort condition="is">3389</DestinationPort>
+        <DestinationPort condition="is">5985</DestinationPort>
+        <DestinationPort condition="is">5986</DestinationPort>
+      </NetworkConnect>
+    </RuleGroup>
+
+    <!-- Event 11: new files that can run code. -->
+    <RuleGroup name="file-create" groupRelation="or">
+      <FileCreate onmatch="include">
+        <TargetFilename condition="end with">.ps1</TargetFilename>
+        <TargetFilename condition="end with">.psm1</TargetFilename>
+        <TargetFilename condition="end with">.js</TargetFilename>
+        <TargetFilename condition="end with">.jse</TargetFilename>
+        <TargetFilename condition="end with">.vbs</TargetFilename>
+        <TargetFilename condition="end with">.hta</TargetFilename>
+        <TargetFilename condition="end with">.bat</TargetFilename>
+        <TargetFilename condition="end with">.cmd</TargetFilename>
+        <TargetFilename condition="end with">.dll</TargetFilename>
+        <TargetFilename condition="end with">.exe</TargetFilename>
+        <TargetFilename condition="end with">.scr</TargetFilename>
+      </FileCreate>
+    </RuleGroup>
+
+    <!-- Events 12 to 14: only the autostart keys. -->
+    <RuleGroup name="registry" groupRelation="or">
+      <RegistryEvent onmatch="include">
+        <TargetObject condition="contains">\Software\Microsoft\Windows\CurrentVersion\Run\</TargetObject>
+        <TargetObject condition="contains">\Software\Microsoft\Windows\CurrentVersion\RunOnce\</TargetObject>
+      </RegistryEvent>
+    </RuleGroup>
+
+    <!-- Turn off event types that are on by default and that bde doesn't use. -->
+    <RuleGroup name="off" groupRelation="or">
+      <FileCreateTime onmatch="include" />
+    </RuleGroup>
+    <RuleGroup name="off-driver" groupRelation="or">
+      <DriverLoad onmatch="include" />
+    </RuleGroup>
+    <RuleGroup name="off-raw" groupRelation="or">
+      <RawAccessRead onmatch="include" />
+    </RuleGroup>
+
+  </EventFiltering>
+</Sysmon>

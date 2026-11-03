@@ -1,0 +1,44 @@
+title: Backups or recovery settings are deleted
+name: proc_inhibit_system_recovery
+id: 75ab4494-7d17-4fe5-b3bd-565a4c306553
+status: experimental
+description: |
+  Deleting shadow copies, the backup catalog, or Windows' automatic recovery
+  setting removes the easy ways to undo damage. Ransomware does this just
+  before encrypting files.
+references:
+  - https://attack.mitre.org/techniques/T1490/
+author: bde course project
+date: 2026-11-03
+tags:
+  - attack.impact
+  - attack.t1490
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_vssadmin:
+    Image|endswith: '\vssadmin.exe'
+    CommandLine|contains|all:
+      - 'delete'
+      - 'shadows'
+  selection_wbadmin:
+    Image|endswith: '\wbadmin.exe'
+    CommandLine|contains:
+      - 'delete catalog'
+      - 'delete systemstatebackup'
+      - 'delete backup'
+  selection_bcdedit:
+    Image|endswith: '\bcdedit.exe'
+    CommandLine|contains:
+      - 'recoveryenabled no'
+      - 'bootstatuspolicy ignoreallfailures'
+  selection_wmic:
+    Image|endswith: '\wmic.exe'
+    CommandLine|contains|all:
+      - 'shadowcopy'
+      - 'delete'
+  condition: 1 of selection_*
+falsepositives:
+  - Backup software rotating old shadow copies (it doesn't usually use vssadmin)
+level: high

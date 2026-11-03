@@ -1,0 +1,6 @@
+# Install with:  python -m pip install -r requirements.txt
+# All three install from ready-made wheels on an Apple Silicon Mac (M1/M2/M3)
+# and on Windows, so no compiler is needed.
+python-evtx==0.8.1   # reads binary .evtx Windows event logs
+PyYAML==6.0.3        # reads the Sigma and chain rules (YAML files)
+pytest==9.2.0        # runs the tests in tests/

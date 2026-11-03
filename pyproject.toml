@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bde"
+version = "0.2.0"
+description = "Behavioral detection engine for LOLBin attack chains (course project)"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = ["python-evtx>=0.8.1", "PyYAML>=6.0"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.scripts]
+bde = "bde.__main__:main"
+
+[tool.setuptools]
+# The rules/ folder is read from the project folder, so run bde from there
+# (python -m bde ...) rather than installing it.
+packages = ["bde", "bde.readers", "bde.generator", "bde.sigma", "bde.report"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = [".", "tests"]

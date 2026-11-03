@@ -1,0 +1,36 @@
+# A chain rule: several signals that, together and in this order, tell one story.
+# Format: our own, modelled on Sigma 2.0's "temporal_ordered" correlation, plus
+# one thing Sigma correlations can't express: every step must happen in the
+# anchor process or a process it started (the same branch of the process tree).
+title: Office document starts PowerShell that calls out, drops a file and persists
+name: chain_office_document_to_powershell
+id: c6cf32d2-e287-41e8-a212-ce6e8d604849
+description: |
+  A macro in a document starts a script engine (directly, or through cmd.exe),
+  which contacts an outside server, saves a script to disk and adds a Run key
+  so it starts again at every logon.
+level: critical
+timespan: 15m
+ordered: true
+min_steps: 3
+tags:
+  # Visible only at chain level: no single event shows the email attachment
+  - attack.initial-access
+  - attack.t1566.001
+steps:
+  - name: office-starts-script-engine
+    description: An Office program, anywhere above it in the tree, starts PowerShell or another script engine
+    signals:
+      - proc_office_spawns_script_engine
+      - proc_powershell_encoded_command
+      - proc_powershell_hidden_window
+    ancestor: [WINWORD.EXE, EXCEL.EXE, POWERPNT.EXE, OUTLOOK.EXE, MSACCESS.EXE, MSPUB.EXE, ONENOTE.EXE, VISIO.EXE]
+  - name: calls-out
+    description: That branch connects to a public address
+    signals: [net_script_engine_public_destination, net_proxy_binary_public_destination]
+  - name: drops-payload
+    description: It writes a script or program into a user-writable folder
+    signals: [file_script_engine_drops_payload]
+  - name: persists
+    description: It sets a Run key that starts a script engine at logon
+    signals: [reg_run_key_script_engine]

@@ -1,0 +1,35 @@
+title: WMI provider host starts a shell or script engine
+name: proc_wmiprvse_spawns_shell
+id: 549b207f-beb0-45f4-b8fb-66ea7ca9448e
+status: experimental
+description: |
+  When someone runs a command through WMI (locally or from another computer,
+  e.g. Invoke-CimMethod Win32_Process Create), Windows' WMI provider host,
+  WmiPrvSE.exe, starts it. A shell under WmiPrvSE.exe is how remote WMI
+  execution looks on the receiving computer.
+references:
+  - https://attack.mitre.org/techniques/T1047/
+author: bde course project
+date: 2026-11-03
+tags:
+  - attack.execution
+  - attack.t1047
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection:
+    ParentImage|endswith: '\WmiPrvSE.exe'
+    Image|endswith:
+      - '\powershell.exe'
+      - '\pwsh.exe'
+      - '\cmd.exe'
+      - '\wscript.exe'
+      - '\cscript.exe'
+      - '\mshta.exe'
+      - '\rundll32.exe'
+      - '\regsvr32.exe'
+  condition: selection
+falsepositives:
+  - Management tools and admins that run commands through WMI (SCCM, remote gpupdate)
+level: high

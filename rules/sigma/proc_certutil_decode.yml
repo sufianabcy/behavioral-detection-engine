@@ -1,0 +1,30 @@
+title: certutil decodes a file
+name: proc_certutil_decode
+id: da2242bb-6f4b-4c5c-be92-76cf338b2bf9
+status: experimental
+description: |
+  certutil -decode turns Base64 text back into a binary file. Attackers send a
+  DLL or EXE as harmless-looking text, then decode it on the victim.
+references:
+  - https://attack.mitre.org/software/S0160/
+  - https://attack.mitre.org/techniques/T1140/
+author: bde course project
+date: 2026-11-03
+tags:
+  - attack.stealth
+  - attack.t1140
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_img:
+    - Image|endswith: '\certutil.exe'
+    - OriginalFileName: 'CertUtil.exe'
+  selection_flag:
+    CommandLine|windash|contains:
+      - ' -decode '
+      - ' -decodehex '
+  condition: all of selection_*
+falsepositives:
+  - Scripts that move binary data around as Base64 text (rare)
+level: medium
