@@ -1,0 +1,35 @@
+title: net lists a domain group such as Domain Admins
+name: proc_domain_group_discovery
+id: ef858807-98b7-4430-aaa6-b41fdde8c765
+status: experimental
+description: |
+  net group ... /domain asks a domain controller who is in a group. Attackers
+  look up Domain Admins to find whose account to steal next. net.exe starts
+  net1.exe to do the work, so net1 under net is filtered to avoid counting
+  one command twice.
+references:
+  - https://attack.mitre.org/techniques/T1069/002/
+author: bde course project
+date: 2026-11-03
+tags:
+  - attack.discovery
+  - attack.t1069.002
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_img:
+    Image|endswith:
+      - '\net.exe'
+      - '\net1.exe'
+  selection_cmd:
+    CommandLine|contains|all:
+      - ' group'
+      - '/domain'
+  filter_net1_from_net:
+    Image|endswith: '\net1.exe'
+    ParentImage|endswith: '\net.exe'
+  condition: all of selection_* and not filter_net1_from_net
+falsepositives:
+  - Admins checking group membership
+level: medium

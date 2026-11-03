@@ -1,0 +1,21 @@
+# Risk scoring: the second way phase 4 raises an incident.
+#
+# Every signal adds points to its host's score, by level. Points fade with
+# time (half of them are gone after `half_life`), and only signals from the
+# last `window` count. A host showing several different ATT&CK tactics gets a
+# bonus, because breadth (execution + persistence + impact ...) is what an
+# intrusion looks like, while one noisy tool usually stays in one tactic.
+# When a host's score reaches `threshold`, it becomes an incident.
+#
+# The same rule firing again for the same process counts once: a beacon that
+# connects every minute is one behaviour, not twenty.
+points:
+  informational: 0
+  low: 5
+  medium: 15
+  high: 35
+  critical: 60
+half_life: 20m
+window: 60m
+tactic_bonus: 10
+threshold: 100

@@ -1,0 +1,47 @@
+title: Office application starts a script engine or LOLBin
+name: proc_office_spawns_script_engine
+id: 19578bb4-ed33-4b72-805e-47e9703dc31a
+status: experimental
+description: |
+  Word, Excel, Outlook and the other Office programs almost never need to start
+  PowerShell, cmd.exe or a script host. When they do, a document's macro is
+  usually running code: the classic first step after a phishing attachment.
+references:
+  - https://attack.mitre.org/techniques/T1204/002/
+author: bde course project
+date: 2026-11-03
+tags:
+  - attack.execution
+  - attack.t1204.002
+  - attack.t1059
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_parent:
+    ParentImage|endswith:
+      - '\WINWORD.EXE'
+      - '\EXCEL.EXE'
+      - '\POWERPNT.EXE'
+      - '\OUTLOOK.EXE'
+      - '\MSACCESS.EXE'
+      - '\MSPUB.EXE'
+      - '\ONENOTE.EXE'
+      - '\VISIO.EXE'
+  selection_child:
+    Image|endswith:
+      - '\powershell.exe'
+      - '\pwsh.exe'
+      - '\cmd.exe'
+      - '\wscript.exe'
+      - '\cscript.exe'
+      - '\mshta.exe'
+      - '\rundll32.exe'
+      - '\regsvr32.exe'
+      - '\certutil.exe'
+      - '\bitsadmin.exe'
+      - '\schtasks.exe'
+  condition: all of selection_*
+falsepositives:
+  - Office add-ins that start helper scripts (rare; check which add-in and document)
+level: high

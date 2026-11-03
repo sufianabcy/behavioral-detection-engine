@@ -1,0 +1,5 @@
+# Keep Unix line endings on every computer, so generated files and their
+# SHA-256 fingerprints are identical on macOS and Windows.
+* text=auto eol=lf
+*.evtx binary
+*.png binary

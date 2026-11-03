@@ -1,0 +1,32 @@
+title: mshta runs a remote page or inline script
+name: proc_mshta_remote_or_inline
+id: 3da0d1eb-c06b-4ad4-85e2-26f98f6ced4b
+status: experimental
+description: |
+  mshta.exe runs HTML Applications (.hta) with full user rights. Given a web
+  address or inline javascript:/vbscript: code, it downloads and runs script
+  in one step. Not part of our simulated chains: tested by unit tests only.
+references:
+  - https://attack.mitre.org/techniques/T1218/005/
+author: bde course project
+date: 2026-11-03
+tags:
+  - attack.stealth
+  - attack.t1218.005
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_img:
+    - Image|endswith: '\mshta.exe'
+    - OriginalFileName: 'MSHTA.EXE'
+  selection_cmd:
+    CommandLine|contains:
+      - 'http://'
+      - 'https://'
+      - 'javascript:'
+      - 'vbscript:'
+  condition: all of selection_*
+falsepositives:
+  - Old line-of-business HTA tools served from an intranet site
+level: high

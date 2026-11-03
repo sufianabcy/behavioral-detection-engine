@@ -1,0 +1,50 @@
+title: Run key set to start a script engine, or set by one
+name: reg_run_key_script_engine
+id: e70d4cea-248e-4779-946b-181ac3924b98
+status: experimental
+description: |
+  Values under ...\CurrentVersion\Run start a program every time the user logs
+  on. Normal software puts its own .exe there. A value that starts PowerShell,
+  a script host or rundll32, or one written by those programs, is how
+  fileless malware survives a reboot.
+references:
+  - https://attack.mitre.org/techniques/T1547/001/
+author: bde course project
+date: 2026-11-03
+tags:
+  - attack.persistence
+  - attack.privilege-escalation
+  - attack.t1547.001
+logsource:
+  category: registry_set
+  product: windows
+detection:
+  selection_key:
+    TargetObject|contains:
+      - '\Software\Microsoft\Windows\CurrentVersion\Run\'
+      - '\Software\Microsoft\Windows\CurrentVersion\RunOnce\'
+  selection_set_by_engine:
+    Image|endswith:
+      - '\powershell.exe'
+      - '\pwsh.exe'
+      - '\wscript.exe'
+      - '\cscript.exe'
+      - '\mshta.exe'
+      - '\rundll32.exe'
+      - '\regsvr32.exe'
+      - '\cmd.exe'
+  selection_starts_engine:
+    Details|contains:
+      - 'powershell'
+      - 'pwsh'
+      - 'wscript'
+      - 'cscript'
+      - 'mshta'
+      - 'rundll32'
+      - 'regsvr32'
+      - 'cmd.exe /c'
+      - 'cmd /c'
+  condition: selection_key and (selection_set_by_engine or selection_starts_engine)
+falsepositives:
+  - Login scripts that IT deploys through a Run key (document them and filter them out)
+level: high

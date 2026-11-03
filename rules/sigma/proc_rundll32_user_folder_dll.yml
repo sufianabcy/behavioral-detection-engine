@@ -1,0 +1,33 @@
+title: rundll32 runs a DLL from a user-writable folder
+name: proc_rundll32_user_folder_dll
+id: 4dc5915e-df93-4889-b56e-f6ef4cfce6ef
+status: experimental
+description: |
+  rundll32 loads a DLL and calls one of its functions. Windows' own DLLs live
+  in System32; a DLL in Users\Public, AppData, Temp or Downloads was most
+  likely put there by whoever is running it.
+references:
+  - https://attack.mitre.org/techniques/T1218/011/
+author: bde course project
+date: 2026-11-03
+tags:
+  - attack.stealth
+  - attack.t1218.011
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_img:
+    - Image|endswith: '\rundll32.exe'
+    - OriginalFileName: 'RUNDLL32.EXE'
+  selection_path:
+    CommandLine|contains:
+      - '\Users\Public\'
+      - '\AppData\'
+      - '\Temp\'
+      - '\Downloads\'
+      - '\ProgramData\'
+  condition: all of selection_*
+falsepositives:
+  - Per-user software that ships its own DLLs (check who signed the DLL)
+level: high

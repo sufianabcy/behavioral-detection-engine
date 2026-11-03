@@ -1,0 +1,37 @@
+title: Command line starts a process on another computer through WMI
+name: proc_remote_wmi_process_create
+id: 9a4df8fe-90e6-4ec7-8ba7-2c4b7e618cc1
+status: experimental
+description: |
+  The sending side of remote WMI execution: PowerShell's Invoke-CimMethod or
+  Invoke-WmiMethod calling Win32_Process Create with -ComputerName, or the
+  older wmic /node:... process call create (wmic.exe is removed from current
+  Windows 11, but older systems still have it).
+references:
+  - https://attack.mitre.org/techniques/T1047/
+author: bde course project
+date: 2026-11-03
+tags:
+  - attack.execution
+  - attack.t1047
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_cim:
+    CommandLine|contains|all:
+      - 'Win32_Process'
+      - '-ComputerName'
+    CommandLine|contains:
+      - 'Invoke-CimMethod'
+      - 'Invoke-WmiMethod'
+  selection_wmic:
+    CommandLine|contains|all:
+      - '/node:'
+      - 'process'
+      - 'call'
+      - 'create'
+  condition: 1 of selection_*
+falsepositives:
+  - Admins running commands on servers remotely
+level: medium

@@ -1,0 +1,36 @@
+title: Windows Script Host runs a JScript file from a user folder
+name: proc_script_host_runs_user_script
+id: d7fd1dd9-c85b-4206-80e1-04488f72c669
+status: experimental
+description: |
+  Double-clicking a .js file runs it with wscript.exe, with the user's full
+  rights. Few people have a reason to run JScript from Downloads, the Desktop
+  or Temp; malware delivered by email or web links often arrives that way.
+references:
+  - https://attack.mitre.org/techniques/T1059/007/
+author: bde course project
+date: 2026-11-03
+tags:
+  - attack.execution
+  - attack.t1059.007
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_img:
+    Image|endswith:
+      - '\wscript.exe'
+      - '\cscript.exe'
+  selection_script:
+    CommandLine|re|i: '\.jse?("|\s|$)'
+  selection_dir:
+    CommandLine|contains:
+      - '\Downloads\'
+      - '\Desktop\'
+      - '\AppData\'
+      - '\Temp\'
+      - '\Users\Public\'
+  condition: all of selection_*
+falsepositives:
+  - Old intranet tools that ship .js helpers
+level: medium

@@ -1,0 +1,27 @@
+title: A Run key (logon autostart) value was set
+name: reg_run_key_modified
+id: ae54b0d8-91d3-4130-914b-4e622417f5b8
+status: experimental
+description: |
+  Any program adding itself to the Run keys. Very common for normal software
+  (OneDrive, Teams, updaters), so it is low on its own; it matters when it
+  appears next to other signals.
+references:
+  - https://attack.mitre.org/techniques/T1547/001/
+author: bde course project
+date: 2026-11-03
+tags:
+  - attack.persistence
+  - attack.t1547.001
+logsource:
+  category: registry_set
+  product: windows
+detection:
+  selection:
+    TargetObject|contains:
+      - '\Software\Microsoft\Windows\CurrentVersion\Run\'
+      - '\Software\Microsoft\Windows\CurrentVersion\RunOnce\'
+  condition: selection
+falsepositives:
+  - Most software that starts at logon
+level: low

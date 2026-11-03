@@ -1,0 +1,52 @@
+title: Script engine writes a script or program into a user-writable folder
+name: file_script_engine_drops_payload
+id: 6f7d30b4-b83c-4f6a-b0f0-300494b29c27
+status: experimental
+description: |
+  A script engine or download-capable LOLBin creating a .ps1, .js, .dll, .exe or
+  similar file under AppData, Temp, Downloads, ProgramData or C:\Users\Public:
+  places any user can write to, where attackers stage the tools they bring in.
+references:
+  - https://attack.mitre.org/techniques/T1105/
+author: bde course project
+date: 2026-11-03
+tags:
+  - attack.command-and-control
+  - attack.t1105
+logsource:
+  category: file_event
+  product: windows
+detection:
+  selection_img:
+    Image|endswith:
+      - '\powershell.exe'
+      - '\pwsh.exe'
+      - '\wscript.exe'
+      - '\cscript.exe'
+      - '\mshta.exe'
+      - '\certutil.exe'
+      - '\bitsadmin.exe'
+  selection_ext:
+    TargetFilename|endswith:
+      - '.ps1'
+      - '.psm1'
+      - '.vbs'
+      - '.js'
+      - '.jse'
+      - '.hta'
+      - '.bat'
+      - '.cmd'
+      - '.dll'
+      - '.exe'
+      - '.scr'
+  selection_dir:
+    TargetFilename|contains:
+      - '\AppData\'
+      - '\Users\Public\'
+      - '\Temp\'
+      - '\Downloads\'
+      - '\ProgramData\'
+  condition: all of selection_*
+falsepositives:
+  - Installers and admin scripts that unpack helpers into Temp
+level: medium

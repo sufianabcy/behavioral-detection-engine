@@ -1,0 +1,28 @@
+title: Script downloads and decodes a DLL with certutil, then runs it with rundll32
+name: chain_script_download_decode_proxy
+id: 314e6862-e191-4957-a971-75f95e607077
+description: |
+  A JScript file run from a user folder uses certutil to download Base64 text,
+  certutil again to decode it into a DLL, and rundll32 to run the DLL, which
+  then calls home. Each tool is signed by Microsoft; only the sequence gives
+  the attack away.
+level: critical
+timespan: 30m
+ordered: true
+min_steps: 3
+steps:
+  - name: script-runs
+    description: wscript or cscript runs a .js file from a user folder
+    signals: [proc_script_host_runs_user_script]
+  - name: downloads
+    description: certutil downloads a file
+    signals: [proc_certutil_download]
+  - name: decodes
+    description: certutil decodes a file
+    signals: [proc_certutil_decode]
+  - name: proxy-runs-dll
+    description: rundll32 runs a DLL from a user-writable folder
+    signals: [proc_rundll32_user_folder_dll]
+  - name: calls-out
+    description: rundll32, regsvr32 or mshta connects to a public address
+    signals: [net_proxy_binary_public_destination]

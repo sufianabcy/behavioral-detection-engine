@@ -1,0 +1,36 @@
+title: PowerShell runs a Base64-encoded command
+name: proc_powershell_encoded_command
+id: 62038fb3-1cf1-4237-ae35-de6bdaaab3ec
+status: experimental
+description: |
+  -EncodedCommand (any abbreviation PowerShell accepts: -e, -ec, -en, -enc, ...)
+  takes the whole command as Base64 text, so nobody reading the command line can
+  see what runs. Attackers use it to hide their code; some management tools use
+  it too, which is why this is only medium on its own.
+references:
+  - https://attack.mitre.org/techniques/T1027/010/
+author: bde course project
+date: 2026-11-03
+tags:
+  - attack.execution
+  - attack.t1059.001
+  - attack.stealth
+  - attack.t1027.010
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_img:
+    - Image|endswith:
+        - '\powershell.exe'
+        - '\pwsh.exe'
+    - OriginalFileName:
+        - 'PowerShell.EXE'
+        - 'pwsh.dll'
+  selection_flag:
+    # a dash or slash, then e / ec / en / enc / ... / encodedcommand, then a long Base64 blob
+    CommandLine|re|i: '\s[-/]e(c|nc?o?d?e?d?c?o?m?m?a?n?d?)?\s+[a-z0-9+/]{16,}={0,2}'
+  condition: all of selection_*
+falsepositives:
+  - Remote-management and deployment agents that send every command encoded
+level: medium

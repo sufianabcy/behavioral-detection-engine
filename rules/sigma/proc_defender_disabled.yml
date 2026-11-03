@@ -1,0 +1,28 @@
+title: PowerShell turns off Microsoft Defender protection
+name: proc_defender_disabled
+id: da79b200-13e7-431c-8aec-43224522cf66
+status: experimental
+description: |
+  Set-MpPreference -DisableRealtimeMonitoring $true (and its siblings) switch
+  off parts of Defender, so the next tool the attacker runs isn't scanned.
+references:
+  - https://attack.mitre.org/techniques/T1685/
+author: bde course project
+date: 2026-11-03
+tags:
+  - attack.defense-impairment
+  - attack.t1685
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_img:
+    Image|endswith:
+      - '\powershell.exe'
+      - '\pwsh.exe'
+  selection_cmd:
+    CommandLine|re|i: 'Set-MpPreference.*-Disable(RealtimeMonitoring|BehaviorMonitoring|IOAVProtection|ScriptScanning|IntrusionPreventionSystem|BlockAtFirstSeen)\s+(\$true|1)'
+  condition: all of selection_*
+falsepositives:
+  - Admins troubleshooting Defender on a test machine
+level: high

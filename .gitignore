@@ -1,34 +1,16 @@
 # Python
 __pycache__/
 *.py[cod]
-*.egg-info/
 .venv/
-venv/
-env/
 .pytest_cache/
+*.egg-info/
 
-# Node / frontend
-node_modules/
-dist/
-build/
-.vite/
+# Public datasets you download (GPL-licensed, and large): keep them out of git
+data/external/
 
-# Local data / databases
-*.db
-*.sqlite
-*.sqlite3
-*.jsonl
-data/
-logs/
-*.log
+# Generated output
+out/
 
-# Secrets / env
-.env
-.env.*
-*.pem
-*.key
-
-# OS / editor
+# OS clutter
 .DS_Store
-.idea/
-.vscode/
+Thumbs.db

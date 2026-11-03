@@ -1,0 +1,41 @@
+title: rundll32, regsvr32 or mshta connects to a public IP address
+name: net_proxy_binary_public_destination
+id: 987381aa-0736-4491-9218-9b363021176f
+status: experimental
+description: |
+  These Windows programs exist to load DLLs or HTML applications, not to talk
+  to the internet. When one connects out, the code it loaded is usually doing
+  the talking: a sign of a payload run through a signed Windows binary.
+references:
+  - https://attack.mitre.org/techniques/T1218/
+author: bde course project
+date: 2026-11-03
+tags:
+  - attack.stealth
+  - attack.t1218
+  - attack.command-and-control
+  - attack.t1071.001
+logsource:
+  category: network_connection
+  product: windows
+detection:
+  selection:
+    Initiated: 'true'
+    Image|endswith:
+      - '\rundll32.exe'
+      - '\regsvr32.exe'
+      - '\mshta.exe'
+  filter_private:
+    DestinationIp|cidr:
+      - '10.0.0.0/8'
+      - '172.16.0.0/12'
+      - '192.168.0.0/16'
+      - '127.0.0.0/8'
+      - '169.254.0.0/16'
+      - '::1/128'
+      - 'fe80::/10'
+      - 'fc00::/7'
+  condition: selection and not filter_private
+falsepositives:
+  - Control Panel items that check for updates (rare)
+level: high
