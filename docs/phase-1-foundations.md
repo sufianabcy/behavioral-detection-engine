@@ -108,7 +108,7 @@ Events with no ProcessGuid, like the Security logon, are counted as skipped. The
 | File | What it does |
 | --- | --- |
 | `bde/event.py` | The `Event` class, time parsing, and small helpers (`windows_basename`, `clean_guid`) |
-| `bde/readers/windows.py` | Reads `.evtx` files (through python-evtx) and XML exports into `Event`s |
+| `bde/readers/windows.py` | Reads `.evtx` files and XML exports into `Event`s (phase 7 changed the `.evtx` parser; see there) |
 | `bde/readers/jsonl.py` | Reads and writes our JSONL format |
 | `bde/readers/__init__.py` | `read_events(path)`: picks the right reader by file extension; also reads whole folders |
 | `bde/tree.py` | `ProcessTree`, `ProcessNode`, `ancestry()`, `has_ancestor()`, `lineage()` |
@@ -139,7 +139,7 @@ python -m bde convert tests/fixtures/sysmon_export.xml -o out/fixture.jsonl
 
 1. Open [EVTX-ATTACK-SAMPLES](https://github.com/sbousseaden/EVTX-ATTACK-SAMPLES) in your browser. It holds about 200 `.evtx` files recorded while real attack tools ran, grouped in folders by ATT&CK tactic.
 2. Open a folder such as *Execution* or *Lateral Movement*, pick a file whose name mentions **sysmon**, and use **Download raw file**.
-3. Save it into `data/external/` (create the folder; git ignores it, because the datasets are GPL-licensed and shouldn't be copied into your repo).
+3. Save it into `data/external/` (create the folder; git ignores it, because the datasets are GPL-licensed and shouldn't be copied into your repo). Phase 7 downloads the whole dataset, and a second one, into the same folder.
 4. Explore it:
 
 ```bash

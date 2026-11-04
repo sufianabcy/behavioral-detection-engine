@@ -9,6 +9,7 @@ older tutorials won't show:
 * Some techniques moved to new IDs with that split. "Disable or Modify Tools"
   was T1562.001 and is now **T1685**; "Clear Windows Event Logs" was
   T1070.001 and is now **T1685.005**. The old ATT&CK pages redirect.
+  Public datasets still use the old IDs; `current_technique()` translates.
 
 Sigma rules tag techniques as `attack.t1059.001` and tactics as
 `attack.execution`; the helpers below read those tags.
@@ -67,7 +68,9 @@ TECHNIQUES: dict[str, tuple[str, tuple[str, ...]]] = {
     "T1218.011": ("System Binary Proxy Execution: Rundll32", ("stealth",)),
     "T1220": ("XSL Script Processing", ("stealth",)),
     "T1685": ("Disable or Modify Tools", ("defense-impairment",)),
+    "T1685.001": ("Disable or Modify Tools: Disable or Modify Windows Event Log", ("defense-impairment",)),
     "T1685.005": ("Disable or Modify Tools: Clear Windows Event Logs", ("defense-impairment",)),
+    "T1686": ("Disable or Modify System Firewall", ("defense-impairment",)),
     "T1033": ("System Owner/User Discovery", ("discovery",)),
     "T1018": ("Remote System Discovery", ("discovery",)),
     "T1069.002": ("Permission Groups Discovery: Domain Groups", ("discovery",)),
@@ -77,6 +80,24 @@ TECHNIQUES: dict[str, tuple[str, tuple[str, ...]]] = {
     "T1105": ("Ingress Tool Transfer", ("command-and-control",)),
     "T1490": ("Inhibit System Recovery", ("impact",)),
 }
+
+# IDs that ATT&CK v19 revoked and reissued when it split Defense Evasion,
+# old -> current. Public datasets labelled before April 2026 use the old ones.
+# Only the IDs this project meets; from the v19 release notes.
+RENAMED: dict[str, str] = {
+    "T1562": "T1685",  # Impair Defenses, merged into Disable or Modify Tools
+    "T1562.001": "T1685",  # Disable or Modify Tools
+    "T1562.002": "T1685.001",  # Disable Windows Event Logging
+    "T1562.004": "T1686",  # Disable or Modify System Firewall
+    "T1562.006": "T1685",  # Indicator Blocking
+    "T1070.001": "T1685.005",  # Clear Windows Event Logs
+}
+
+
+def current_technique(technique: str) -> str:
+    """The ATT&CK v20 ID for a technique ID, which may come from an older version."""
+    technique = technique.upper()
+    return RENAMED.get(technique, technique)
 
 
 def technique_name(technique: str) -> str:

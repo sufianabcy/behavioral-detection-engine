@@ -180,7 +180,7 @@ def evtx_backend() -> str:
 
     `evtx` is written in Rust: about 40 times faster, and in phase 7 it read
     every record of 571 public recordings, where python-evtx (pure Python)
-    could not decode 1,681 records of newer Windows versions. requirements.txt
+    could not decode any record in 15 of them (1,681 records). requirements.txt
     installs `evtx` everywhere it has a ready-made build, and python-evtx only
     on Windows on ARM, where it doesn't. Never install both in one environment
     on a Mac or on Windows: their import names, `evtx` and `Evtx`, differ only

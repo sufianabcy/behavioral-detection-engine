@@ -5,7 +5,7 @@ __pycache__/
 .pytest_cache/
 *.egg-info/
 
-# Public datasets you download (GPL-licensed, and large): keep them out of git
+# Public datasets you download (one is GPL-licensed, and both are large): keep them out of git
 data/external/
 
 # Generated output

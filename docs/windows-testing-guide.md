@@ -62,13 +62,18 @@ Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 
 Every time you open a new PowerShell window later, `cd` back to the folder and run `.venv\Scripts\Activate.ps1` again.
 
+Two special cases:
+
+- **You set this folder up before, and have since updated the project** (pulled, or downloaded a new ZIP over it): the `.evtx` reader changed in phase 7, so start the environment again with `py -m venv --clear .venv`, then run the last two lines above.
+- **Your computer has an ARM processor** (Snapdragon, some Surface models): the install picks a different `.evtx` reader, `python-evtx`, because the usual one has no ARM build for Windows. Everything else works the same; it's just slower on big logs. Please mention it in the results.
+
 ### A4. Run the tests
 
 ```powershell
 python -m pytest
 ```
 
-**Expected:** `256 passed` (the time will vary). Anything failed or skipped: copy the whole output into the results.
+**Expected:** `321 passed` (the time will vary). Anything failed or skipped: copy the whole output into the results.
 
 ### A5. Run the demo
 
@@ -226,13 +231,15 @@ python -m bde convert data\external -o out\real.jsonl
 python -m bde detect out\real.jsonl --out out\real
 ```
 
-`convert` reads the `.evtx` files once (that's the slow part, a minute or two for a big log) and saves them in the engine's own format. If `detect` finds incidents, open `out\real\report.html` and have a look.
+`convert` reads the `.evtx` files once and saves them in the engine's own format, so later commands start faster. If `detect` finds incidents, open `out\real\report.html` and have a look.
 
 Also run the external-data scan, which lists what fired per file:
 
 ```powershell
 python -m bde evaluate --external data\external
 ```
+
+Its first line says which `.evtx` reader it used, and the summary says how many records it couldn't read (normally 0).
 
 ### B5. What to note
 
@@ -358,7 +365,7 @@ Python version (py --version): ____
 How you got the project: git clone / ZIP, branch: ____
 
 PART A
-A4 tests:            ___ passed, ___ failed, ___ skipped   (expected 256 passed)
+A4 tests:            ___ passed, ___ failed, ___ skipped   (expected 321 passed)
 A5 demo:             "_ of 4 attack chains detected; _ false alarms"   (expected 4 of 4, 0)
 A5 report.html:      looks right? dark mode works?  ____
 A6 fingerprint:      ____________________   (expected 739b8730...d1e219)
@@ -375,6 +382,7 @@ Sysmon version and how long it ran: ____
 What the computer was used for meanwhile: ____
 stats: ___ events
 detect: ___ signals, ___ incidents
+evaluate --external: "Reading .evtx files with ____"; ___ unreadable records
 Each incident: title, and what normal activity caused it: ____
 
 PART C (optional)

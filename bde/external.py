@@ -10,6 +10,10 @@ false positives the way phase 5 does. What we can measure:
   a rule *for that technique* fired. That is the closest thing to recall that
   unlabelled recordings allow.
 
+Folder names written before ATT&CK v19 use IDs that have since moved (the
+"Clear Windows event logs" folder says T1070.001, which is T1685.005 now), so
+labels are translated to v20 first; the report lists each translation.
+
 A file whose technique none of our rules claims is **out of scope**: nothing
 is expected to fire. If something does, it is either another step of the
 same attack (attackers rarely do just one thing) or a false alarm, and a
@@ -27,7 +31,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .attack import technique_name
+from .attack import current_technique, technique_name
 from .engine import RuleSet, detect
 from .readers import SUPPORTED_SUFFIXES, read_events
 
@@ -62,7 +66,8 @@ def technique_matches(label: str, technique: str) -> bool:
 @dataclass
 class FileResult:
     path: Path
-    label: str | None  # ATT&CK technique from the folder or file name
+    label: str | None  # ATT&CK v20 technique from the folder or file name
+    written: str | None = None  # the label as the folder writes it, if that's an older ID
     events: int = 0
     unreadable: int = 0  # damaged records the parser skipped
     error: str | None = None  # the whole file could not be read
@@ -82,7 +87,9 @@ def find_files(folder: Path) -> list[Path]:
 
 
 def scan_file(path: Path, root: Path, rules: RuleSet) -> FileResult:
-    result = FileResult(path, technique_label(path, root))
+    written = technique_label(path, root)
+    label = current_technique(written) if written else None
+    result = FileResult(path, label, written if written != label else None)
     stats: dict[str, int] = {}
     try:
         events = list(read_events(path, stats))
@@ -152,6 +159,15 @@ def format_report(results: list[FileResult], rules: RuleSet, root: Path, show_al
     lines += [
         "",
         f"{len(labelled)} files are labelled with an ATT&CK technique (in a folder or file name).",
+    ]
+    renamed: dict[tuple[str, str], int] = {}
+    for r in labelled:
+        if r.written:
+            renamed[(r.written, r.label)] = renamed.get((r.written, r.label), 0) + 1
+    if renamed:
+        moves = ", ".join(f"{old} -> {new} ({count} files)" for (old, new), count in sorted(renamed.items()))
+        lines.append(f"  Older ATT&CK IDs read as their v20 IDs: {moves}.")
+    lines += [
         f"  In scope, a rule claims the technique: {len(scoped)} files, {len(detected)} detected by a rule "
         f"for that technique{share}",
     ]
@@ -161,7 +177,9 @@ def format_report(results: list[FileResult], rules: RuleSet, root: Path, show_al
     for label in sorted(by_label):
         group = by_label[label]
         hits = sum(r.detected() for r in group)
-        name = technique_name(label) if technique_name(label) != label else "(parent technique: several kinds)"
+        name = technique_name(label)
+        if name == label:  # not in bde/attack.py
+            name = "(parent technique: several kinds)" if "." not in label else "(name not in bde/attack.py)"
         lines.append(f"    {label:<10} {len(group):3} files {hits:3} detected   {name}")
     noisy = [r for r in outside if r.signals]
     lines += [

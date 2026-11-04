@@ -84,6 +84,8 @@ Anything we don't support (for example `base64offset`, or aggregations after `|`
 
 ## 4. The 23 rules
 
+These are the rules phase 3 wrote. Phase 7 added six more and widened two after testing on real recordings; its [section 3](phase-7-real-data.md#3-the-development-set-what-we-changed) lists them.
+
 | Area | Rules | Level |
 | --- | --- | --- |
 | Office and scripts | `proc_office_spawns_script_engine`, `proc_script_host_runs_user_script`, `proc_script_host_spawns_lolbin` | high, medium, high |

@@ -122,6 +122,6 @@ Open the Navigator, choose **Open Existing Layer → Upload from local**, and pi
 2. "Rule exists" only says someone wrote a rule with that tag; the unit tests show it matches hand-made events. "Detected" means a simulated attack used the technique and an incident actually contained the signal, end to end.
 3. So it opens anywhere, offline, can be attached to an email or a submission, and can't run anything. A report about attack data shouldn't need to execute code.
 4. They show what correlation filtered out, so an analyst (or examiner) can check that nothing important was dropped, and they're a starting point for tuning.
-5. That was correct before ATT&CK v20. In v20 (October 2026), Disable or Modify Tools became T1685 under the new Defense Impairment tactic, and T1562.001 redirects there.
+5. That was correct before ATT&CK v19. Since v19 (April 2026), Disable or Modify Tools is T1685 under the new Defense Impairment tactic, and T1562.001 redirects there. v20 (October 2026), which this project uses, keeps it.
 
 </details>

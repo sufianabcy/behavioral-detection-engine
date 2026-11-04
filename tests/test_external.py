@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+from bde.attack import current_technique
 from bde.engine import RuleSet
 from bde.event import SYSMON_CHANNEL, Event
 from bde.external import (
@@ -93,3 +94,27 @@ def test_report_counts_scope_and_detections(dataset):
     assert "Out of scope: 1 files; 0 raised signals anyway." in text
     assert "1 files have no technique in their folder or file name." in text
     assert "Other/broken.evtx: could not read" in text
+
+
+@pytest.mark.parametrize("old, new", [
+    ("T1070.001", "T1685.005"),  # Clear Windows Event Logs
+    ("T1562.001", "T1685"),  # Disable or Modify Tools
+    ("T1562.002", "T1685.001"),  # Disable Windows Event Logging
+    ("t1562.004", "T1686"),  # Disable or Modify System Firewall
+    ("T1059.001", "T1059.001"),  # most IDs did not move
+])
+def test_older_attack_ids_are_read_as_v20(old, new):
+    assert current_technique(old) == new
+
+
+def test_a_folder_with_an_old_id_is_scored_under_the_new_one(tmp_path):
+    root = tmp_path / "recordings"
+    cleared = Event(1102, T0, "DC01", "Security", {"SubjectUserName": "admin"})
+    _write(root / "TA0005-Defense Evasion" / "T1070.001-Clear Windows event logs" / "clear.jsonl", [cleared])
+    rules = RuleSet.load()
+    [result] = scan_folder(root, rules)
+    assert (result.written, result.label) == ("T1070.001", "T1685.005")
+    assert result.detected()  # sec_security_log_cleared is tagged T1685.005
+    text = "\n".join(format_report([result], rules, root))
+    assert "Older ATT&CK IDs read as their v20 IDs: T1070.001 -> T1685.005 (1 files)." in text
+    assert "T1685.005    1 files   1 detected   Disable or Modify Tools: Clear Windows Event Logs" in text

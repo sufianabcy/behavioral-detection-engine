@@ -76,6 +76,8 @@ python -m bde evaluate --external data/external/
 
 These files have no per-event labels, so it reports what fired per file, not precision and recall. Use it to answer "does the engine see the attack in this recording, and with which rules?" and compare with the technique in the file's folder name. Phase 1 explains how to download the files; the Windows testing guide adds your own Sysmon logs.
 
+[Phase 7](phase-7-real-data.md) takes this much further: two public datasets, one to develop on and one held out, and a per-technique score for recordings whose folders name an ATT&CK technique.
+
 ## 4. Code tour
 
 | File | What it does |
