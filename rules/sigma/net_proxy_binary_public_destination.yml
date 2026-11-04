@@ -1,4 +1,4 @@
-title: rundll32, regsvr32 or mshta connects to a public IP address
+title: rundll32, regsvr32, mshta or WMIC connects to a public IP address
 name: net_proxy_binary_public_destination
 id: 987381aa-0736-4491-9218-9b363021176f
 status: experimental
@@ -6,13 +6,17 @@ description: |
   These Windows programs exist to load DLLs or HTML applications, not to talk
   to the internet. When one connects out, the code it loaded is usually doing
   the talking: a sign of a payload run through a signed Windows binary.
+  WMIC was added in phase 7: "wmic ... /format:https://..." fetches an XSL
+  stylesheet with script inside, and two public recordings showed it.
 references:
   - https://attack.mitre.org/techniques/T1218/
+  - https://attack.mitre.org/techniques/T1220/
 author: bde course project
 date: 2026-11-03
 tags:
   - attack.stealth
   - attack.t1218
+  - attack.t1220
   - attack.command-and-control
   - attack.t1071.001
 logsource:
@@ -25,6 +29,7 @@ detection:
       - '\rundll32.exe'
       - '\regsvr32.exe'
       - '\mshta.exe'
+      - '\wmic.exe'
   filter_private:
     DestinationIp|cidr:
       - '10.0.0.0/8'

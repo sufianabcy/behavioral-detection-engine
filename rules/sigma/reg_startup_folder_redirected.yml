@@ -1,0 +1,35 @@
+title: The Startup folder was pointed at a different folder
+name: reg_startup_folder_redirected
+id: 0f0d9716-59ee-41cb-a2fb-29b21863f5b6
+status: experimental
+description: |
+  Everything in a user's Startup folder runs at logon. Instead of copying a
+  file into that folder, an attacker can change where the folder is: the
+  "Startup" value under Explorer\User Shell Folders. Windows sets it once when
+  a profile is created, always to the Start Menu path, so a value that points
+  anywhere else is worth a look. Added in phase 7, after a public recording
+  showed it; the Run-key rules don't see it.
+references:
+  - https://attack.mitre.org/techniques/T1547/001/
+author: bde course project
+date: 2026-11-03
+tags:
+  - attack.persistence
+  - attack.t1547.001
+logsource:
+  category: registry_set
+  product: windows
+detection:
+  selection:
+    TargetObject|contains:
+      - '\Explorer\User Shell Folders\'
+      - '\Explorer\Shell Folders\'
+    TargetObject|endswith:
+      - '\Startup'
+      - '\Common Startup'
+  filter_default:
+    Details|contains: '\Start Menu\Programs\Startup'
+  condition: selection and not filter_default
+falsepositives:
+  - Roaming-profile or folder-redirection setups that move the Start Menu to a file server
+level: high

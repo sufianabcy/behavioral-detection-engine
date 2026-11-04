@@ -2,7 +2,7 @@
 
 This is the normalizer from the plan. Supported inputs:
 
-  .evtx   binary Windows event log (needs python-evtx)
+  .evtx   binary Windows event log (needs the evtx package, or python-evtx)
   .xml    XML export from Event Viewer or wevtutil
   .jsonl  our own format (from the generator or from `bde convert`)
 
@@ -16,12 +16,13 @@ from pathlib import Path
 
 from ..event import Event
 from .jsonl import read_jsonl, write_jsonl
-from .windows import parse_event_xml, read_evtx, read_xml_file
+from .windows import evtx_backend, parse_event_xml, read_evtx, read_xml_file
 
 SUPPORTED_SUFFIXES = (".evtx", ".xml", ".jsonl")
 
 __all__ = [
     "SUPPORTED_SUFFIXES",
+    "evtx_backend",
     "parse_event_xml",
     "read_events",
     "read_evtx",
@@ -31,19 +32,23 @@ __all__ = [
 ]
 
 
-def read_events(path: str | Path) -> Iterator[Event]:
-    """Yield every event in a file, or in every supported file in a folder."""
+def read_events(path: str | Path, stats: dict[str, int] | None = None) -> Iterator[Event]:
+    """Yield every event in a file, or in every supported file in a folder.
+
+    Pass a dict as `stats` to have it count "unreadable" .evtx records:
+    damaged ones the parser had to skip.
+    """
     path = Path(path)
     if path.is_dir():
         for child in sorted(path.iterdir()):
             if child.is_file() and child.suffix.lower() in SUPPORTED_SUFFIXES:
-                yield from read_events(child)
+                yield from read_events(child, stats)
         return
     if not path.exists():
         raise FileNotFoundError(f"no such file or folder: {path}")
     suffix = path.suffix.lower()
     if suffix == ".evtx":
-        yield from read_evtx(path)
+        yield from read_evtx(path, stats)
     elif suffix == ".xml":
         yield from read_xml_file(path)
     elif suffix == ".jsonl":

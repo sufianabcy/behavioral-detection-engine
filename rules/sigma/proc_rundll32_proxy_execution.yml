@@ -1,0 +1,33 @@
+title: rundll32 uses a Windows DLL to start another program or run script
+name: proc_rundll32_proxy_execution
+id: 5044795b-e8e7-4681-8d9a-86c2e8ef45df
+status: experimental
+description: |
+  Some DLLs that ship with Windows export a function that simply starts
+  whatever program it is given: zipfldr.dll RouteTheCall, advpack.dll
+  RegisterOCX and pcwutl.dll LaunchApplication. Called through rundll32, they
+  start a program whose parent is a Microsoft-signed binary, which hides it
+  from rules that look at parents. "javascript:" with RunHTMLApplication runs
+  script inside rundll32 itself. Added in phase 7, after five public
+  recordings got past proc_rundll32_user_folder_dll, which only looks at where
+  the DLL lives.
+references:
+  - https://attack.mitre.org/techniques/T1218/011/
+author: bde course project
+date: 2026-11-03
+tags:
+  - attack.stealth
+  - attack.t1218.011
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_img:
+    - Image|endswith: '\rundll32.exe'
+    - OriginalFileName: 'RUNDLL32.EXE'
+  selection_export:
+    CommandLine|re|i: 'zipfldr(\.dll)?\s*,\s*RouteTheCall|advpack(\.dll)?\s*,\s*RegisterOCX|pcwutl(\.dll)?\s*,\s*LaunchApplication|RunHTMLApplication|javascript:'
+  condition: all of selection_*
+falsepositives:
+  - Very old software that registers controls with advpack.dll RegisterOCX
+level: high

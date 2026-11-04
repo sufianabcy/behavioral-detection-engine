@@ -1,5 +1,6 @@
 import codecs
 import shutil
+import sys
 
 import pytest
 
@@ -108,3 +109,88 @@ def test_sample_file_has_labels_for_later_phases():
     malicious = [e for e in events if e.meta.get("label") == "malicious"]
     assert len(malicious) == 7
     assert {e.meta["chain"] for e in malicious} == {"chain-1"}
+
+
+# --- Phase 7: what real recordings taught the reader -------------------------
+
+from bde.readers import windows  # noqa: E402  (kept next to the tests that use it)
+
+GOOD_RECORD = (
+    "<Event><System><EventID>4688</EventID><TimeCreated SystemTime='2026-11-03T09:00:00Z'/>"
+    "<Channel>Security</Channel><Computer>H</Computer></System>"
+    "<EventData><Data Name='NewProcessName'>C:\\Windows\\System32\\cmd.exe</Data></EventData></Event>"
+)
+
+
+@pytest.mark.parametrize("raw, canonical", [
+    ("365ABB72-3D4A-9F6E-0000-0010F9E15E00", "{365abb72-3d4a-9f6e-0000-0010f9e15e00}"),
+    ("{365abb72-3d4a-9f6e-0000-0010f9e15e00}", "{365abb72-3d4a-9f6e-0000-0010f9e15e00}"),
+    ("0x00000000000003e7", "0x3e7"),
+    ("0X3E7", "0x3e7"),
+    ("True", "true"),
+    ("False", "false"),
+    ("C:\\Windows\\System32\\cmd.exe", "C:\\Windows\\System32\\cmd.exe"),  # ordinary text is untouched
+    ("0x12 and more", "0x12 and more"),
+    ("TRUE", "TRUE"),
+    ("", ""),
+])
+def test_typed_values_are_written_one_way_whichever_tool_read_them(raw, canonical):
+    assert windows.canonical_value(raw) == canonical
+
+
+def test_canonical_values_apply_to_event_fields():
+    event = parse_event_xml(
+        "<Event><System><EventID>4624</EventID><TimeCreated SystemTime='2026-11-03T09:00:00Z'/>"
+        "<Channel>Security</Channel><Computer>H</Computer></System><EventData>"
+        "<Data Name='TargetLogonId'>0x00000000000A1B2C</Data>"
+        "<Data Name='LogonGuid'>5E1D0E6B-0B8A-4C55-9D3C-1A2B3C4D5E6F</Data>"
+        "<Data Name='ElevatedToken'>True</Data></EventData></Event>"
+    )
+    assert event.get("TargetLogonId") == "0xa1b2c"
+    assert event.get("LogonGuid") == "{5e1d0e6b-0b8a-4c55-9d3c-1a2b3c4d5e6f}"
+    assert event.get("ElevatedToken") == "true"
+
+
+def test_a_character_xml_forbids_does_not_lose_the_event():
+    # A real recording had a raw \x0f byte inside a privilege list. XML 1.0
+    # forbids it, so without the clean-up the whole event would be unreadable.
+    event = parse_event_xml(GOOD_RECORD.replace("cmd.exe</Data>", "cmd.exe\x0f</Data>"))
+    assert event.get("NewProcessName") == "C:\\Windows\\System32\\cmd.exe\ufffd"
+
+
+def test_evtx_backend_names_the_installed_parser():
+    assert windows.evtx_backend() in ("evtx", "python-evtx")
+
+
+def test_a_missing_evtx_parser_is_explained(monkeypatch):
+    for name in ("evtx", "Evtx", "Evtx.Evtx"):
+        monkeypatch.setitem(sys.modules, name, None)  # makes "import <name>" fail
+    with pytest.raises(RuntimeError, match="requirements.txt"):
+        windows.evtx_backend()
+
+
+def test_an_empty_evtx_file_has_no_events(tmp_path):
+    empty = tmp_path / "empty.evtx"
+    empty.write_bytes(b"")
+    assert list(read_events(empty)) == []
+
+
+def test_damaged_records_are_skipped_and_counted(tmp_path, monkeypatch, caplog):
+    # A recording can hold a few records the parser can't decode. Those are
+    # skipped one by one, counted, and the rest of the file is still read.
+    log = tmp_path / "damaged.evtx"
+    log.write_bytes(b"ElfFile\x00" + bytes(4088))
+
+    def records(path):
+        yield GOOD_RECORD
+        yield None  # the parser could not decode this record
+        yield "<Event><System>"  # this one came out as broken XML
+        yield GOOD_RECORD
+
+    monkeypatch.setattr(windows, "_records_rust", records)
+    monkeypatch.setattr(windows, "_records_python", records)
+    stats: dict[str, int] = {}
+    events = list(read_events(log, stats))
+    assert [e.event_id for e in events] == [4688, 4688]
+    assert stats == {"unreadable": 2}
+    assert "skipped 2 unreadable records in damaged.evtx" in caplog.text

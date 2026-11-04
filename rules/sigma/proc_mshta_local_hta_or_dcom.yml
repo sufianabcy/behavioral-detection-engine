@@ -1,0 +1,39 @@
+title: mshta runs an HTA from a user or browser-cache folder, or is started through DCOM
+name: proc_mshta_local_hta_or_dcom
+id: c783f3a3-3221-4cf5-b509-048da5922743
+status: experimental
+description: |
+  Real attacks rarely give mshta.exe a web address. More often a browser, a
+  document or a script drops the .hta first, and mshta runs it from Temp,
+  AppData, the browser cache or C:\Users\Public. "-Embedding" means mshta was
+  started through DCOM, which is how the LethalHTA technique runs an HTA on
+  another computer. Added in phase 7, after three public recordings got past
+  proc_mshta_remote_or_inline.
+references:
+  - https://attack.mitre.org/techniques/T1218/005/
+author: bde course project
+date: 2026-11-03
+tags:
+  - attack.stealth
+  - attack.t1218.005
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_img:
+    - Image|endswith: '\mshta.exe'
+    - OriginalFileName: 'MSHTA.EXE'
+  selection_user_folder:
+    CommandLine|contains:
+      - '\AppData\'
+      - '\Temp\'
+      - '\Downloads\'
+      - '\Users\Public\'
+      - '\Temporary Internet Files\'
+      - '\INetCache\'
+  selection_dcom:
+    CommandLine|contains: ' -Embedding'
+  condition: selection_img and (selection_user_folder or selection_dcom)
+falsepositives:
+  - Installers that unpack a helper .hta into Temp and run it (check who signed the installer)
+level: high

@@ -1,18 +1,24 @@
-title: Windows Script Host runs a JScript file from a user folder
+title: Windows Script Host runs a script file from a user folder
 name: proc_script_host_runs_user_script
 id: d7fd1dd9-c85b-4206-80e1-04488f72c669
 status: experimental
 description: |
-  Double-clicking a .js file runs it with wscript.exe, with the user's full
-  rights. Few people have a reason to run JScript from Downloads, the Desktop
-  or Temp; malware delivered by email or web links often arrives that way.
+  Double-clicking a .js or .vbs file runs it with wscript.exe, with the user's
+  full rights. Few people have a reason to run JScript or VBScript from
+  Downloads, the Desktop or Temp; malware delivered by email or web links
+  often arrives that way. "/E:vbs" or "/E:jscript" makes the host run a file
+  whatever its extension, so a script can pose as an icon or a text file.
+  Phase 7 widened this rule from JScript only, after public recordings ran
+  VBScript from the browser cache and from C:\Windows\Temp.
 references:
   - https://attack.mitre.org/techniques/T1059/007/
+  - https://attack.mitre.org/techniques/T1059/005/
 author: bde course project
 date: 2026-11-03
 tags:
   - attack.execution
   - attack.t1059.007
+  - attack.t1059.005
 logsource:
   category: process_creation
   product: windows
@@ -22,7 +28,7 @@ detection:
       - '\wscript.exe'
       - '\cscript.exe'
   selection_script:
-    CommandLine|re|i: '\.jse?("|\s|$)'
+    CommandLine|re|i: '\.(jse?|vb[se]|wsf)("|\s|$)|\s//?e:(jscript|vbscript|vbs)\b'
   selection_dir:
     CommandLine|contains:
       - '\Downloads\'
@@ -32,5 +38,5 @@ detection:
       - '\Users\Public\'
   condition: all of selection_*
 falsepositives:
-  - Old intranet tools that ship .js helpers
+  - Old intranet tools that ship .js or .vbs helpers
 level: medium

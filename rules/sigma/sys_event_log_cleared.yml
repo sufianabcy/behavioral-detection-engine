@@ -1,0 +1,28 @@
+title: An event log other than Security was cleared
+name: sys_event_log_cleared
+id: c9c601a8-62bc-41e9-a475-40db390bf8fd
+status: experimental
+description: |
+  When any log other than Security is cleared, Windows writes event 104 into
+  the System log, with the name of the log and the user who cleared it.
+  Attackers clear the System, PowerShell and Sysmon logs too, not only
+  Security. Added in phase 7: sec_security_log_cleared, which only knows
+  event 1102, missed a public recording of this.
+references:
+  - https://attack.mitre.org/techniques/T1685/005/
+author: bde course project
+date: 2026-11-03
+tags:
+  - attack.defense-impairment
+  - attack.t1685.005
+logsource:
+  product: windows
+  service: system
+detection:
+  selection:
+    EventID: 104
+    Provider_Name: 'Microsoft-Windows-Eventlog'
+  condition: selection
+falsepositives:
+  - Planned log resets (should be rare and announced)
+level: high

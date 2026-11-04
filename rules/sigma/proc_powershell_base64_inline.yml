@@ -1,0 +1,39 @@
+title: PowerShell decodes Base64 in its command line and runs the result
+name: proc_powershell_base64_inline
+id: b8b686a8-635d-466c-9065-5e71f961bd56
+status: experimental
+description: |
+  -EncodedCommand is not the only way to hide a script. Attack tools often
+  pass a short command that decodes a Base64 blob with FromBase64String and
+  runs it with Invoke-Expression (IEX) or a script block, or unzips it first
+  with GzipStream. Admin scripts almost never do this on the command line.
+  Added in phase 7, after the PowerShell payload of Metasploit's psexec and a
+  rundll32-to-wscript recording carried their scripts this way.
+references:
+  - https://attack.mitre.org/techniques/T1059/001/
+  - https://attack.mitre.org/techniques/T1027/010/
+author: bde course project
+date: 2026-11-03
+tags:
+  - attack.execution
+  - attack.t1059.001
+  - attack.stealth
+  - attack.t1027.010
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_decode:
+    CommandLine|contains: 'FromBase64String'
+  selection_run:
+    CommandLine|contains:
+      - 'IEX'
+      - 'Invoke-Expression'
+      - 'scriptblock]::create'
+      - 'GzipStream'
+      - 'DeflateStream'
+      - 'Reflection.Assembly]::Load'
+  condition: all of selection_*
+falsepositives:
+  - Deployment scripts that ship a small payload inline (check what decodes to)
+level: medium

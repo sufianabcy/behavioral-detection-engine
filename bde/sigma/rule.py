@@ -75,6 +75,8 @@ def field_value(event: Event, name: str) -> str | None:
         return event.channel
     if name in ("Computer", "Hostname"):
         return event.host
+    if name == "Provider_Name":  # System/Provider: which component wrote the event
+        return event.meta.get("provider")
     value = event.data.get(name)
     if value is None and event.event_id == 4688 and event.channel == "Security":
         if name in SECURITY_4688_FIELDS:

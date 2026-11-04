@@ -6,7 +6,7 @@ This document is generated from the rules in `rules/` and a run of the engine on
 
 ATT&CK version: Enterprise v20. In this version the old *Defense Evasion* tactic is split into **Stealth** (TA0005) and **Defense Impairment** (TA0112); Disable or Modify Tools moved from T1562.001 to **T1685** and Clear Windows Event Logs from T1070.001 to **T1685.005**.
 
-**Coverage:** 21 techniques detected in the simulated chains, 2 with a rule that only unit tests exercise, and 6 that the simulated attacks use but nothing detects (listed under Gaps, on purpose: they show the engine's limits).
+**Coverage:** 21 techniques detected in the simulated chains, 5 with a rule that only unit tests exercise, and 6 that the simulated attacks use but nothing detects (listed under Gaps, on purpose: they show the engine's limits).
 
 ## Summary
 
@@ -18,21 +18,24 @@ ATT&CK version: Enterprise v20. In this version the old *Defense Evasion* tactic
 | Execution | [T1047](https://attack.mitre.org/techniques/T1047/) Windows Management Instrumentation | `proc_remote_wmi_process_create`, `proc_wmiprvse_spawns_shell` | Detected in the simulated chains |
 | Execution, Persistence, Privilege Escalation | [T1053.005](https://attack.mitre.org/techniques/T1053/005/) Scheduled Task/Job: Scheduled Task | nothing | Not detected (gap) |
 | Execution | [T1059](https://attack.mitre.org/techniques/T1059/) Command and Scripting Interpreter | `proc_office_spawns_script_engine`, `proc_script_host_spawns_lolbin` | Detected in the simulated chains |
-| Execution | [T1059.001](https://attack.mitre.org/techniques/T1059/001/) Command and Scripting Interpreter: PowerShell | `proc_powershell_encoded_command` | Detected in the simulated chains |
+| Execution | [T1059.001](https://attack.mitre.org/techniques/T1059/001/) Command and Scripting Interpreter: PowerShell | `proc_powershell_base64_inline`, `proc_powershell_encoded_command` | Detected in the simulated chains |
 | Execution | [T1059.003](https://attack.mitre.org/techniques/T1059/003/) Command and Scripting Interpreter: Windows Command Shell | nothing | Not detected (gap) |
+| Execution | [T1059.005](https://attack.mitre.org/techniques/T1059/005/) Command and Scripting Interpreter: Visual Basic | `proc_script_host_runs_user_script` | Rule exists, tested by unit tests only |
 | Execution | [T1059.007](https://attack.mitre.org/techniques/T1059/007/) Command and Scripting Interpreter: JavaScript | `proc_script_host_runs_user_script` | Detected in the simulated chains |
 | Execution, Persistence, Stealth | [T1197](https://attack.mitre.org/techniques/T1197/) BITS Jobs | nothing | Not detected (gap) |
 | Execution | [T1204.002](https://attack.mitre.org/techniques/T1204/002/) User Execution: Malicious File | `proc_office_spawns_script_engine` | Detected in the simulated chains |
-| Persistence, Privilege Escalation | [T1547.001](https://attack.mitre.org/techniques/T1547/001/) Boot or Logon Autostart Execution: Registry Run Keys / Startup Folder | `reg_run_key_modified`, `reg_run_key_script_engine` | Detected in the simulated chains |
-| Stealth | [T1027.010](https://attack.mitre.org/techniques/T1027/010/) Obfuscated Files or Information: Command Obfuscation | `proc_powershell_encoded_command` | Detected in the simulated chains |
+| Persistence, Privilege Escalation | [T1546.003](https://attack.mitre.org/techniques/T1546/003/) Event Triggered Execution: Windows Management Instrumentation Event Subscription | `wmi_event_consumer_created` | Rule exists, tested by unit tests only |
+| Persistence, Privilege Escalation | [T1547.001](https://attack.mitre.org/techniques/T1547/001/) Boot or Logon Autostart Execution: Registry Run Keys / Startup Folder | `reg_run_key_modified`, `reg_run_key_script_engine`, `reg_startup_folder_redirected` | Detected in the simulated chains |
+| Stealth | [T1027.010](https://attack.mitre.org/techniques/T1027/010/) Obfuscated Files or Information: Command Obfuscation | `proc_powershell_base64_inline`, `proc_powershell_encoded_command` | Detected in the simulated chains |
 | Stealth | [T1140](https://attack.mitre.org/techniques/T1140/) Deobfuscate/Decode Files or Information | `proc_certutil_decode` | Detected in the simulated chains |
 | Stealth | [T1218](https://attack.mitre.org/techniques/T1218/) System Binary Proxy Execution | `net_proxy_binary_public_destination` | Detected in the simulated chains |
-| Stealth | [T1218.005](https://attack.mitre.org/techniques/T1218/005/) System Binary Proxy Execution: Mshta | `proc_mshta_remote_or_inline` | Rule exists, tested by unit tests only |
+| Stealth | [T1218.005](https://attack.mitre.org/techniques/T1218/005/) System Binary Proxy Execution: Mshta | `proc_mshta_local_hta_or_dcom`, `proc_mshta_remote_or_inline` | Rule exists, tested by unit tests only |
 | Stealth | [T1218.010](https://attack.mitre.org/techniques/T1218/010/) System Binary Proxy Execution: Regsvr32 | nothing | Not detected (gap) |
-| Stealth | [T1218.011](https://attack.mitre.org/techniques/T1218/011/) System Binary Proxy Execution: Rundll32 | `proc_rundll32_user_folder_dll` | Detected in the simulated chains |
+| Stealth | [T1218.011](https://attack.mitre.org/techniques/T1218/011/) System Binary Proxy Execution: Rundll32 | `proc_rundll32_proxy_execution`, `proc_rundll32_user_folder_dll` | Detected in the simulated chains |
+| Stealth | [T1220](https://attack.mitre.org/techniques/T1220/) XSL Script Processing | `net_proxy_binary_public_destination` | Rule exists, tested by unit tests only |
 | Stealth | [T1564.003](https://attack.mitre.org/techniques/T1564/003/) Hide Artifacts: Hidden Window | `proc_powershell_hidden_window` | Detected in the simulated chains |
 | Defense Impairment | [T1685](https://attack.mitre.org/techniques/T1685/) Disable or Modify Tools | `proc_defender_disabled` | Detected in the simulated chains |
-| Defense Impairment | [T1685.005](https://attack.mitre.org/techniques/T1685/005/) Disable or Modify Tools: Clear Windows Event Logs | `proc_event_log_cleared_wevtutil`, `sec_security_log_cleared` | Detected in the simulated chains |
+| Defense Impairment | [T1685.005](https://attack.mitre.org/techniques/T1685/005/) Disable or Modify Tools: Clear Windows Event Logs | `proc_event_log_cleared_wevtutil`, `sec_security_log_cleared`, `sys_event_log_cleared` | Detected in the simulated chains |
 | Discovery | [T1018](https://attack.mitre.org/techniques/T1018/) Remote System Discovery | `proc_nltest_domain_discovery` | Detected in the simulated chains |
 | Discovery | [T1033](https://attack.mitre.org/techniques/T1033/) System Owner/User Discovery | `proc_whoami_privileges` | Detected in the simulated chains |
 | Discovery | [T1069.002](https://attack.mitre.org/techniques/T1069/002/) Permission Groups Discovery: Domain Groups | `proc_domain_group_discovery` | Detected in the simulated chains |
@@ -85,12 +88,21 @@ ATT&CK version: Enterprise v20. In this version the old *Defense Evasion* tactic
 ### T1059.001 Command and Scripting Interpreter: PowerShell
 
 - **Tactics:** Execution
-- **Detected by:** `proc_powershell_encoded_command` (medium)
+- **Detected by:** `proc_powershell_base64_inline` (medium), `proc_powershell_encoded_command` (medium)
 - **Data needed:** Sysmon 1 (process create), or Security 4688
 - **Simulated chains:** chain-1, chain-1u, chain-3, chain-3u
 - **Example evidence:** `cmd.exe starts powershell.exe: powershell.exe -nop -w hidden -enc VwByAGkAdABlAC0ATwB1AHQAcAB1AHQAIAAnAFMASQBNAFUATABBAFQARQBEAC0AUwBUAEEARwBFAC0AMgAnAA==`
-- **Known false positives:** Remote-management and deployment agents that send every command encoded
+- **Known false positives:** Deployment scripts that ship a small payload inline (check what decodes to); Remote-management and deployment agents that send every command encoded
 - **Coverage:** Detected in the simulated chains
+
+### T1059.005 Command and Scripting Interpreter: Visual Basic
+
+- **Tactics:** Execution
+- **Detected by:** `proc_script_host_runs_user_script` (medium)
+- **Data needed:** Sysmon 1 (process create), or Security 4688
+- **Simulated chains:** none (unit tests only)
+- **Known false positives:** Old intranet tools that ship .js or .vbs helpers
+- **Coverage:** Rule exists, tested by unit tests only
 
 ### T1059.007 Command and Scripting Interpreter: JavaScript
 
@@ -99,7 +111,7 @@ ATT&CK version: Enterprise v20. In this version the old *Defense Evasion* tactic
 - **Data needed:** Sysmon 1 (process create), or Security 4688
 - **Simulated chains:** chain-2, chain-2u
 - **Example evidence:** `explorer.exe starts wscript.exe: "C:\Windows\System32\WScript.exe" "C:\Users\mlopez\Downloads\statement_7184.js"`
-- **Known false positives:** Old intranet tools that ship .js helpers
+- **Known false positives:** Old intranet tools that ship .js or .vbs helpers
 - **Coverage:** Detected in the simulated chains
 
 ### T1204.002 User Execution: Malicious File
@@ -112,24 +124,33 @@ ATT&CK version: Enterprise v20. In this version the old *Defense Evasion* tactic
 - **Known false positives:** Office add-ins that start helper scripts (rare; check which add-in and document)
 - **Coverage:** Detected in the simulated chains
 
+### T1546.003 Event Triggered Execution: Windows Management Instrumentation Event Subscription
+
+- **Tactics:** Persistence, Privilege Escalation
+- **Detected by:** `wmi_event_consumer_created` (high)
+- **Data needed:** {'category': 'wmi_event', 'product': 'windows'}
+- **Simulated chains:** none (unit tests only)
+- **Known false positives:** Management and monitoring agents (SCCM, some vendor tools) that register their own consumers; they should be few and stable
+- **Coverage:** Rule exists, tested by unit tests only
+
 ### T1547.001 Boot or Logon Autostart Execution: Registry Run Keys / Startup Folder
 
 - **Tactics:** Persistence, Privilege Escalation
-- **Detected by:** `reg_run_key_modified` (low), `reg_run_key_script_engine` (high)
+- **Detected by:** `reg_run_key_modified` (low), `reg_run_key_script_engine` (high), `reg_startup_folder_redirected` (high)
 - **Data needed:** Sysmon 13 (registry value set)
 - **Simulated chains:** chain-1
 - **Example evidence:** `powershell.exe sets HKU\S-1-5-21-1004336348-1177238915-682003330-1108\Software\Microsoft\Windows\CurrentVersion\Run\EdgeUpdateTask = powershell.exe -nop -w h...`
-- **Known false positives:** Most software that starts at logon; Login scripts that IT deploys through a Run key (document them and filter them out)
+- **Known false positives:** Most software that starts at logon; Login scripts that IT deploys through a Run key (document them and filter them out); Roaming-profile or folder-redirection setups that move the Start Menu to a file server
 - **Coverage:** Detected in the simulated chains
 
 ### T1027.010 Obfuscated Files or Information: Command Obfuscation
 
 - **Tactics:** Stealth
-- **Detected by:** `proc_powershell_encoded_command` (medium)
+- **Detected by:** `proc_powershell_base64_inline` (medium), `proc_powershell_encoded_command` (medium)
 - **Data needed:** Sysmon 1 (process create), or Security 4688
 - **Simulated chains:** chain-1, chain-1u, chain-3
 - **Example evidence:** `cmd.exe starts powershell.exe: powershell.exe -nop -w hidden -enc VwByAGkAdABlAC0ATwB1AHQAcAB1AHQAIAAnAFMASQBNAFUATABBAFQARQBEAC0AUwBUAEEARwBFAC0AMgAnAA==`
-- **Known false positives:** Remote-management and deployment agents that send every command encoded
+- **Known false positives:** Deployment scripts that ship a small payload inline (check what decodes to); Remote-management and deployment agents that send every command encoded
 - **Coverage:** Detected in the simulated chains
 
 ### T1140 Deobfuscate/Decode Files or Information
@@ -155,21 +176,30 @@ ATT&CK version: Enterprise v20. In this version the old *Defense Evasion* tactic
 ### T1218.005 System Binary Proxy Execution: Mshta
 
 - **Tactics:** Stealth
-- **Detected by:** `proc_mshta_remote_or_inline` (high)
+- **Detected by:** `proc_mshta_local_hta_or_dcom` (high), `proc_mshta_remote_or_inline` (high)
 - **Data needed:** Sysmon 1 (process create), or Security 4688
 - **Simulated chains:** none (unit tests only)
-- **Known false positives:** Old line-of-business HTA tools served from an intranet site
+- **Known false positives:** Installers that unpack a helper .hta into Temp and run it (check who signed the installer); Old line-of-business HTA tools served from an intranet site
 - **Coverage:** Rule exists, tested by unit tests only
 
 ### T1218.011 System Binary Proxy Execution: Rundll32
 
 - **Tactics:** Stealth
-- **Detected by:** `proc_rundll32_user_folder_dll` (high)
+- **Detected by:** `proc_rundll32_proxy_execution` (high), `proc_rundll32_user_folder_dll` (high)
 - **Data needed:** Sysmon 1 (process create), or Security 4688
 - **Simulated chains:** chain-2
 - **Example evidence:** `wscript.exe starts rundll32.exe: rundll32.exe C:\Users\Public\rivgfb.dll,Start`
-- **Known false positives:** Per-user software that ships its own DLLs (check who signed the DLL)
+- **Known false positives:** Very old software that registers controls with advpack.dll RegisterOCX; Per-user software that ships its own DLLs (check who signed the DLL)
 - **Coverage:** Detected in the simulated chains
+
+### T1220 XSL Script Processing
+
+- **Tactics:** Stealth
+- **Detected by:** `net_proxy_binary_public_destination` (high)
+- **Data needed:** Sysmon 3 (network connection)
+- **Simulated chains:** none (unit tests only)
+- **Known false positives:** Control Panel items that check for updates (rare)
+- **Coverage:** Rule exists, tested by unit tests only
 
 ### T1564.003 Hide Artifacts: Hidden Window
 
@@ -194,8 +224,8 @@ ATT&CK version: Enterprise v20. In this version the old *Defense Evasion* tactic
 ### T1685.005 Disable or Modify Tools: Clear Windows Event Logs
 
 - **Tactics:** Defense Impairment
-- **Detected by:** `proc_event_log_cleared_wevtutil` (high), `sec_security_log_cleared` (high)
-- **Data needed:** Sysmon 1 (process create), or Security 4688; Security log
+- **Detected by:** `proc_event_log_cleared_wevtutil` (high), `sec_security_log_cleared` (high), `sys_event_log_cleared` (high)
+- **Data needed:** Sysmon 1 (process create), or Security 4688; Security log; {'product': 'windows', 'service': 'system'}
 - **Simulated chains:** chain-4
 - **Example evidence:** `cmd.exe starts wevtutil.exe: wevtutil.exe cl Security`
 - **Known false positives:** Admins resetting logs on test machines; Planned log resets (should be rare and announced)
@@ -288,7 +318,7 @@ Techniques the simulated attacks use that no rule detects. Each is a possible ne
 | Rule | Level | What it detects | Techniques |
 | --- | --- | --- | --- |
 | `file_script_engine_drops_payload` | medium | Script engine writes a script or program into a user-writable folder | T1105 |
-| `net_proxy_binary_public_destination` | high | rundll32, regsvr32 or mshta connects to a public IP address | T1218, T1071.001 |
+| `net_proxy_binary_public_destination` | high | rundll32, regsvr32, mshta or WMIC connects to a public IP address | T1218, T1220, T1071.001 |
 | `net_script_engine_public_destination` | medium | Script engine connects to a public IP address | T1071.001 |
 | `proc_certutil_decode` | medium | certutil decodes a file | T1140 |
 | `proc_certutil_download` | high | certutil downloads a file from a URL | T1105 |
@@ -296,20 +326,26 @@ Techniques the simulated attacks use that no rule detects. Each is a possible ne
 | `proc_domain_group_discovery` | medium | net lists a domain group such as Domain Admins | T1069.002 |
 | `proc_event_log_cleared_wevtutil` | high | wevtutil clears an event log | T1685.005 |
 | `proc_inhibit_system_recovery` | high | Backups or recovery settings are deleted | T1490 |
+| `proc_mshta_local_hta_or_dcom` | high | mshta runs an HTA from a user or browser-cache folder, or is started through DCOM | T1218.005 |
 | `proc_mshta_remote_or_inline` | high | mshta runs a remote page or inline script | T1218.005 |
 | `proc_nltest_domain_discovery` | medium | nltest lists domain controllers or domain trusts | T1018, T1482 |
 | `proc_office_spawns_script_engine` | high | Office application starts a script engine or LOLBin | T1204.002, T1059 |
+| `proc_powershell_base64_inline` | medium | PowerShell decodes Base64 in its command line and runs the result | T1059.001, T1027.010 |
 | `proc_powershell_encoded_command` | medium | PowerShell runs a Base64-encoded command | T1059.001, T1027.010 |
 | `proc_powershell_hidden_window` | medium | PowerShell starts with a hidden window | T1564.003 |
 | `proc_remote_wmi_process_create` | medium | Command line starts a process on another computer through WMI | T1047 |
+| `proc_rundll32_proxy_execution` | high | rundll32 uses a Windows DLL to start another program or run script | T1218.011 |
 | `proc_rundll32_user_folder_dll` | high | rundll32 runs a DLL from a user-writable folder | T1218.011 |
-| `proc_script_host_runs_user_script` | medium | Windows Script Host runs a JScript file from a user folder | T1059.007 |
+| `proc_script_host_runs_user_script` | medium | Windows Script Host runs a script file from a user folder | T1059.007, T1059.005 |
 | `proc_script_host_spawns_lolbin` | high | Windows Script Host starts a LOLBin | T1059 |
 | `proc_whoami_privileges` | low | whoami lists the user's privileges or groups | T1033 |
 | `proc_wmiprvse_spawns_shell` | high | WMI provider host starts a shell or script engine | T1047 |
 | `reg_run_key_modified` | low | A Run key (logon autostart) value was set | T1547.001 |
 | `reg_run_key_script_engine` | high | Run key set to start a script engine, or set by one | T1547.001 |
+| `reg_startup_folder_redirected` | high | The Startup folder was pointed at a different folder | T1547.001 |
 | `sec_security_log_cleared` | high | The Security log was cleared | T1685.005 |
+| `sys_event_log_cleared` | high | An event log other than Security was cleared | T1685.005 |
+| `wmi_event_consumer_created` | high | A WMI event consumer that runs a command or a script was created | T1546.003 |
 | `chain_office_document_to_powershell` (chain) | critical | Office document starts PowerShell that calls out, drops a file and persists. Steps: office-starts-script-engine -> calls-out -> drops-payload -> persists; needs 3 | T1566.001 |
 | `chain_script_download_decode_proxy` (chain) | critical | Script downloads and decodes a DLL with certutil, then runs it with rundll32. Steps: script-runs -> downloads -> decodes -> proxy-runs-dll -> calls-out; needs 3 | (from its steps) |
 | `chain_wmi_remote_shell_discovery` (chain) | critical | Remote WMI starts a shell that hides itself or explores the domain. Steps: wmi-starts-shell -> hides-itself -> calls-out -> discovery; needs 2 | T1078.002 |

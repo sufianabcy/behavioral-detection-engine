@@ -209,7 +209,7 @@ def cmd_evaluate(args: argparse.Namespace) -> int:
 
     rules = RuleSet.load()
     if args.external:
-        return _scan_external(args.external, rules)
+        return _scan_external(args.external, rules, args.all_files)
     scores = run_evaluation(args.seeds, hours=args.hours, workstations=args.workstations,
                             unseen=not args.no_unseen, rules=rules)
     soak = run_soak(hours=args.soak_hours, rules=rules) if args.soak_hours > 0 else None
@@ -217,33 +217,21 @@ def cmd_evaluate(args: argparse.Namespace) -> int:
     return 0
 
 
-def _scan_external(folder: Path, rules) -> int:  # noqa: ANN001
-    """Public datasets have no per-event labels: report what fired, file by file."""
-    from collections import Counter
+def _scan_external(folder: Path, rules, show_all: bool = False) -> int:  # noqa: ANN001
+    """Public recordings have no per-event labels: report what fired, file by file (phase 7)."""
+    from .external import format_report, scan_folder
+    from .readers import evtx_backend
 
-    from .engine import detect
-    from .readers import SUPPORTED_SUFFIXES
-
-    files = sorted(p for p in folder.rglob("*") if p.suffix.lower() in SUPPORTED_SUFFIXES) if folder.is_dir() else [folder]
-    if not files:
+    if not folder.exists():
+        raise FileNotFoundError(f"no such file or folder: {folder}")
+    results = scan_folder(folder, rules)
+    if not results:
         print(f"No .evtx, .xml or .jsonl files under {folder}")
         return 0
-    flagged = 0
-    for path in files:
-        try:
-            result = detect(read_events(path), rules)
-        except (ValueError, RuntimeError) as exc:
-            print(f"{path.name}: could not read ({exc})")
-            continue
-        counts = Counter(s.rule.name for s in result.signals)
-        flagged += bool(result.signals)
-        print(f"{path.name}: {len(result.events)} events, {len(result.signals)} signals, "
-              f"{len(result.incidents)} incidents")
-        for name, count in counts.most_common(5):
-            print(f"    {count:4}  {name}")
-        for incident in result.incidents:
-            print(f"    -> {incident.id} {incident.title}")
-    print(f"\n{flagged} of {len(files)} files raised at least one signal.")
+    if any(r.path.suffix.lower() == ".evtx" for r in results):
+        print(f"Reading .evtx files with {evtx_backend()}.\n")
+    root = folder if folder.is_dir() else folder.parent
+    print("\n".join(format_report(results, rules, root, show_all)))
     return 0
 
 
@@ -390,7 +378,9 @@ def build_parser() -> argparse.ArgumentParser:
     evaluate.add_argument("--soak-hours", type=float, default=24.0,
                           help="hours of normal-only activity for the soak test (default 24; 0 to skip)")
     evaluate.add_argument("--external", type=Path, metavar="FOLDER",
-                          help="instead, run on downloaded public datasets and report what fired, per file")
+                          help="instead, run on downloaded public recordings and report what fired (phase 7)")
+    evaluate.add_argument("--all-files", action="store_true",
+                          help="with --external, list every file, not only those that raised something")
     evaluate.set_defaults(func=cmd_evaluate)
 
     mapping = commands.add_parser("mapping", help="regenerate the ATT&CK mapping document (phase 6)")

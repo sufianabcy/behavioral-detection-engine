@@ -1,0 +1,36 @@
+title: A WMI event consumer that runs a command or a script was created
+name: wmi_event_consumer_created
+id: 7c7c290b-c290-4185-ac14-014327105cf6
+status: experimental
+description: |
+  WMI can run a command or a script whenever something happens: every few
+  minutes, at startup, when a user logs on. An attacker who sets this up
+  (a filter, a consumer and a binding between them) gets persistence with
+  nothing on disk except the WMI database: fileless. Sysmon event 20 records
+  each consumer. "Command Line" consumers start a program; "Script" consumers
+  run VBScript or JScript inside WMI. Added in phase 7, after two public
+  recordings showed it.
+references:
+  - https://attack.mitre.org/techniques/T1546/003/
+author: bde course project
+date: 2026-11-03
+tags:
+  - attack.persistence
+  - attack.privilege-escalation
+  - attack.t1546.003
+logsource:
+  category: wmi_event
+  product: windows
+detection:
+  selection:
+    EventID: 20
+    Type:
+      - 'Command Line'
+      - 'Script'
+    Operation:
+      - 'Created'
+      - 'Modified'
+  condition: selection
+falsepositives:
+  - Management and monitoring agents (SCCM, some vendor tools) that register their own consumers; they should be few and stable
+level: high

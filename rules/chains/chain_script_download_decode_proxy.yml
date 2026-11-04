@@ -12,7 +12,7 @@ ordered: true
 min_steps: 3
 steps:
   - name: script-runs
-    description: wscript or cscript runs a .js file from a user folder
+    description: wscript or cscript runs a script file (.js, .vbs and similar) from a user folder
     signals: [proc_script_host_runs_user_script]
   - name: downloads
     description: certutil downloads a file

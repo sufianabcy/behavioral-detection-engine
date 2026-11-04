@@ -4,11 +4,15 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bde"
-version = "0.2.0"
+version = "0.3.0"
 description = "Behavioral detection engine for LOLBin attack chains (course project)"
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = ["python-evtx>=0.8.1", "PyYAML>=6.0"]
+dependencies = [
+    "evtx>=0.13.1; platform_machine != 'ARM64'",
+    "python-evtx>=0.8.1; platform_machine == 'ARM64'",
+    "PyYAML>=6.0",
+]
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]
